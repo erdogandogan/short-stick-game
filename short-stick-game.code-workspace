@@ -1,0 +1,14 @@
+{
+  "folders": [
+    { "path": "frontend" },
+    { "path": "backend/ShortStickGame.Api" }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/bin": true,
+      "**/obj": true,
+      "**/.expo": true
+    },
+    "terminal.integrated.defaultProfile.windows": "PowerShell"
+  }
+}

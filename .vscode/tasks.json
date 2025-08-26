@@ -1,0 +1,30 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build-backend",
+			"type": "shell",
+			"command": "dotnet build \"c:\\Users\\asus\\Desktop\\short-stick-game\\backend\\ShortStickGame.Api\\ShortStickGame.Api.csproj\"",
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "run-backend",
+			"type": "shell",
+			"command": "dotnet run --project \"c:\\Users\\asus\\Desktop\\short-stick-game\\backend\\ShortStickGame.Api\\ShortStickGame.Api.csproj\"",
+			"isBackground": true,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-backend",
+			"type": "shell",
+			"command": "dotnet build \"c:\\Users\\asus\\Desktop\\short-stick-game\\backend\\ShortStickGame.Api\\ShortStickGame.Api.csproj\"",
+			"group": "build"
+		}
+	]
+}

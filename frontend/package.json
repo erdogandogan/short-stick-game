@@ -1,0 +1,50 @@
+{
+  "name": "short-stick-game",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo/AppEntry.js",
+  "scripts": {
+    "start": "npx expo start --port 8081",
+    "android": "npx expo start --port 8081 --android",
+    "test": "node ./tests/validation.spec.mjs && node ./tests/gameUi.spec.mjs"
+  },
+  "dependencies": {
+    "@expo-google-fonts/bangers": "^0.4.0",
+    "@expo-google-fonts/lilita-one": "^0.4.0",
+    "@expo/metro-runtime": "~5.0.4",
+    "@react-native-async-storage/async-storage": "2.1.2",
+    "@react-navigation/native": "^7.1.17",
+    "@react-navigation/native-stack": "^7.3.25",
+    "axios": "^1.11.0",
+  "expo": "~53.0.22",
+    "expo-clipboard": "^7.1.5",
+    "expo-font": "^13.3.2",
+  "expo-secure-store": "~14.2.4",
+    "expo-status-bar": "~2.2.3",
+    "jwt-decode": "^4.0.0",
+    "nativewind": "^4.1.23",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-native": "0.79.5",
+    "react-native-gesture-handler": "~2.24.0",
+    "react-native-reanimated": "~3.17.4",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-screens": "~4.11.1",
+    "react-native-web": "^0.20.0",
+    "expo-linear-gradient": "~14.1.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.0",
+    "babel-preset-expo": "~13.0.0",
+    "tailwindcss": "^3.4.17"
+  },
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "jwt-decode"
+        ]
+      }
+    }
+  }
+}

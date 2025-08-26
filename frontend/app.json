@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Short Stick Game",
+    "slug": "short-stick-game",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "shortstickgame",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "extra": {
+  "EXPO_PUBLIC_API_BASE_URL": "http://localhost:5189",
+  "EXPO_PUBLIC_ANDROID_USE_LOCALHOST": "0"
+    },
+    
+    "android": {
+      "package": "com.shortstickgame.app",
+      "permissions": [],
+      "allowBackup": true
+    }
+  }
+}

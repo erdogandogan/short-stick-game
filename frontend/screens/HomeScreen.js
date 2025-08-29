@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, Pressable, StyleSheet, FlatList, RefreshControl, ActivityIndicator, Alert, ScrollView, StatusBar, ImageBackground, Image } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable, StyleSheet, FlatList, RefreshControl, ActivityIndicator, Alert, ScrollView, StatusBar, ImageBackground, Image, Modal } from 'react-native';
 import { LinearGradient as LG } from 'expo-linear-gradient';
 import { useToast } from '../context/ToastContext';
 import { useFocusEffect } from '@react-navigation/native';
@@ -18,6 +18,9 @@ export default function HomeScreen({ navigation }) {
   const [joiningId, setJoiningId] = useState(null);
   const [buttonsTop, setButtonsTop] = useState(null); // for fade overlay positioning
   const [buttonsHeight, setButtonsHeight] = useState(0); // for list bottom padding
+  // Themed delete confirmation modal
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // Match avatar logic with UserProfileScreen: use assigned URL if present,
   // otherwise deterministic local monster by user id.
@@ -75,7 +78,7 @@ export default function HomeScreen({ navigation }) {
         return;
       }
   console.error('Games fetch error:', e?.message, e?.response?.data);
-  toast.error('Oyunlar yüklenirken bir sorun oluştu');
+  toast.error('Oyunlar yüklenirken bir sorun olustu');
     } finally {
       // Avoid flicker after logout redirect
       setLoading((prev) => (prev ? false : prev));
@@ -113,7 +116,7 @@ export default function HomeScreen({ navigation }) {
     } catch (e) {
       const status = e?.response?.status;
       if (status === 401) { await logout(); return; }
-  toast.error(e?.response?.data?.message || 'Katılım başarısız');
+  toast.error(e?.response?.data?.message || 'Katılım basarısız');
     } finally {
       setJoiningId(null);
     }
@@ -122,22 +125,9 @@ export default function HomeScreen({ navigation }) {
   const renderItem = ({ item }) => {
     const canJoin = !item.isOwner; // not owner; backend Join checks started state
     const onDelete = async () => {
-      Alert.alert('Sil', 'Bu oyunu silmek istediğine emin misin?', [
-        { text: 'Vazgeç', style: 'cancel' },
-        {
-          text: 'Sil', style: 'destructive', onPress: async () => {
-            try {
-              await gamesApi.delete(item.id);
-              setGames((prev) => prev.filter((g) => g.id !== item.id));
-            } catch (e) {
-              const status = e?.response?.status;
-              if (status === 401) { await logout(); return; }
-              const msg = e?.response?.data?.message || 'Silme işlemi başarısız';
-              toast.error(msg);
-            }
-          }
-        }
-      ]);
+  // open themed modal instead of native alert
+  setDeleteTarget(item);
+  setDeleteModalVisible(true);
     };
     return (
       <GameCard
@@ -151,9 +141,31 @@ export default function HomeScreen({ navigation }) {
     );
   };
 
+  const cancelDelete = useCallback(() => {
+    setDeleteModalVisible(false);
+    setDeleteTarget(null);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!deleteTarget) return;
+    try {
+      await gamesApi.delete(deleteTarget.id);
+      setGames((prev) => prev.filter((g) => g.id !== deleteTarget.id));
+      setDeleteModalVisible(false);
+      setDeleteTarget(null);
+    } catch (e) {
+      const status = e?.response?.status;
+      if (status === 401) { await logout(); return; }
+      const msg = e?.response?.data?.message || 'Silme islemi basarısız';
+      toast.error(msg);
+      setDeleteModalVisible(false);
+      setDeleteTarget(null);
+    }
+  }, [deleteTarget, logout, toast]);
+
   const ListEmpty = () => (
     <View style={styles.emptyWrap}>
-      <Text style={styles.emptyText}>Henüz bir oyunun yok. Bir oyun oluştur ve arkadaşlarını davet et.</Text>
+      <Text style={styles.emptyText}>Henüz bir oyunun yok. Bir oyun olustur ve arkadaslarını davet et.</Text>
     </View>
   );
 
@@ -315,10 +327,30 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
       </View>
+      {/* Themed delete confirmation modal */}
+      <Modal visible={deleteModalVisible} transparent animationType="fade" onRequestClose={cancelDelete}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Bu oyunu silmek istedigine emin misin?</Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={[styles.modalBtn, styles.modalBtnCancel]} onPress={cancelDelete}>
+                <Text style={styles.modalBtnText}>Vazgeç</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalBtn, styles.modalBtnDestructive]} onPress={confirmDelete}>
+                <Text style={[styles.modalBtnText, { fontWeight: '700' }]}>Sil</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
       </View>
   </View>
   );
 }
+
+/* Themed delete confirmation modal placed outside main component return for clarity */
+// ...existing code...
+
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#ecfdf5' },
@@ -374,4 +406,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     elevation: 1,
   },
+  modalBackdrop: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' },
+  modalCard: { width: '80%', backgroundColor: '#fff', padding: 18, borderRadius: 12, alignItems: 'center' },
+  modalTitle: { fontSize: 16, color: '#064e3b', marginBottom: 12, textAlign: 'center' },
+  modalActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
+  modalBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10 },
+  modalBtnCancel: { backgroundColor: '#6b7280' },
+  modalBtnDestructive: { backgroundColor: '#ef4444' },
+  modalBtnText: { color: '#fff', fontFamily: 'LilitaOne_400Regular' },
 });

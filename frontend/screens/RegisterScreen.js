@@ -50,7 +50,7 @@ export default function RegisterScreen({ navigation }) {
       await register({ username, email, password });
       // navigation will switch based on auth context
     } catch (e) {
-      const msg = e?.response?.data?.message || 'Kayıt başarısız';
+      const msg = e?.response?.data?.message || 'Kayıt basarısız';
       toast.error(msg);
     } finally {
       setSubmitting(false);

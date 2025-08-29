@@ -46,7 +46,7 @@ export default function LoginScreen({ navigation }) {
       await login({ emailOrUsername, password });
       // navigation will switch based on auth context
     } catch (e) {
-      const msg = e?.response?.data?.message || 'Giriş başarısız';
+      const msg = e?.response?.data?.message || 'Giris basarısız';
       toast.error(msg);
     } finally {
       setSubmitting(false);

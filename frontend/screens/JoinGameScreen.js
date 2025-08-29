@@ -20,7 +20,7 @@ export default function JoinGameScreen({ navigation }) {
   const v = canJoin({ code: raw });
   if (!v.ok) { toast.warn(v.error); return; }
     if (!user?.id) {
-  toast.error('Oturum bulunamadı, lütfen tekrar giriş yapın.');
+  toast.error('Oturum bulunamadı, lütfen tekrar giris yapın.');
       return;
     }
     try {
@@ -36,7 +36,7 @@ export default function JoinGameScreen({ navigation }) {
         return;
       }
       const msg = e?.response?.data?.message ||
-        (status === 404 ? 'Oyun bulunamadı' : status === 409 ? 'Bu oyuna zaten katıldınız' : 'Katılım başarısız');
+        (status === 404 ? 'Oyun bulunamadı' : status === 409 ? 'Bu oyuna zaten katıldınız' : 'Katılım basarısız');
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -67,8 +67,8 @@ export default function JoinGameScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, justifyContent: 'space-between' },
-  title: { fontSize: 20, fontWeight: '700', marginBottom: 12 },
-  input: { borderWidth: 1, borderRadius: 8, padding: 12, backgroundColor: '#fff' },
+  title: { fontSize: 20, marginBottom: 12, fontFamily: 'LilitaOne_400Regular' },
+  input: { borderWidth: 1, borderRadius: 8, padding: 12, backgroundColor: '#fff', fontFamily: 'LilitaOne_400Regular' },
   button: { marginTop: 24, padding: 14, borderRadius: 8, alignItems: 'center' },
   buttonText: { color: '#fff', fontFamily: 'LilitaOne_400Regular' },
   disabled: { opacity: 0.6 },

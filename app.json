@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "10896aec-765e-4ca3-988b-b553a2412a7a"
+      }
+    },
+    "android": {
+      "package": "com.syankhi.shortstickgame"
+    }
+  }
+}

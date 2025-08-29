@@ -73,7 +73,7 @@ export default function GameHistoryScreen({ navigation }) {
     return (
       <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('GameHistoryDetail', { gameId: item.gameId })}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={styles.type}>{item.isGlobal ? 'Global' : 'Arkadaş'}</Text>
+          <Text style={styles.type}>{item.isGlobal ? 'Global' : 'Arkadas'}</Text>
           <Text style={styles.date}>{item.completedAt ? new Date(item.completedAt).toLocaleString() : (item.startedAt ? new Date(item.startedAt).toLocaleString() : '')}</Text>
         </View>
         <Text style={styles.penalty} numberOfLines={2}>{item.penaltyText}</Text>
@@ -102,7 +102,7 @@ export default function GameHistoryScreen({ navigation }) {
           return (
             <TouchableOpacity style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.cardBorder }]} onPress={() => navigation.navigate('GameHistoryDetail', { gameId: item.gameId })}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={[styles.type, { color: theme.colors.info }]}>{item.isGlobal ? 'Global' : 'Arkadaş'}</Text>
+                <Text style={[styles.type, { color: theme.colors.info }]}>{item.isGlobal ? 'Global' : 'Arkadas'}</Text>
                 <Text style={[styles.date, { color: theme.colors.textMuted }]}>{item.completedAt ? new Date(item.completedAt).toLocaleString() : (item.startedAt ? new Date(item.startedAt).toLocaleString() : '')}</Text>
               </View>
               <Text style={[styles.penalty, { color: theme.colors.primary }]} numberOfLines={2}>{item.penaltyText}</Text>

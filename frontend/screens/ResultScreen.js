@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, FlatList, TouchableOpacity, Image } from 'react-native';
+import ThreeDButton from '../components/ThreeDButton';
 import { getAvatarSource } from '../utils/avatars';
 import { gamesApi } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -92,9 +93,13 @@ export default function ResultScreen({ route, navigation }) {
         contentContainerStyle={{ paddingBottom: 24 }}
       />
       <View style={[styles.footer, { backgroundColor: theme.colors.surface }]}> 
-        <TouchableOpacity onPress={() => navigation.navigate('Home')} style={[styles.homeBtn, { backgroundColor: theme.colors.primary }]}>
-          <Text style={styles.homeText}>Ana Sayfaya Dön</Text>
-        </TouchableOpacity>
+        <ThreeDButton
+          text={"Ana Sayfaya Dön"}
+          onPress={() => navigation.navigate('Home')}
+          color={theme.colors.primary}
+          containerStyle={{ height: 52 }}
+          textStyle={styles.homeText}
+        />
       </View>
     </View>
   );

@@ -1,6 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, FlatList, RefreshControl, TouchableOpacity, Alert, Image, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, FlatList, RefreshControl, TouchableOpacity, Alert, Image, Pressable, Modal } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+dayjs.extend(utc);
+dayjs.extend(timezone);
 import { gamesApi } from '../api';
 import { addListener, subscribe, unsubscribe } from '../utils/ws';
 import * as Clipboard from 'expo-clipboard';
@@ -11,6 +16,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useToast } from '../context/ToastContext';
 
+// API'den veya WebSocket'ten gelen verileri detay modeline dönüştür
 function toDetailModel(d) {
   if (!d) return null;
   return {
@@ -34,14 +40,23 @@ function toDetailModel(d) {
 }
 
 function formatDateTimeTR(dateVal) {
-  const d = new Date(dateVal);
-  if (isNaN(d)) return '';
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  const h = String(d.getHours()).padStart(2, '0');
-  const m = String(d.getMinutes()).padStart(2, '0');
-  return `${day}.${month}.${year} ${h}.${m}`;
+  if (!dateVal) return '';
+  try {
+    // Parse as UTC baseline then convert to Istanbul.
+    const base = dayjs.utc(dateVal);
+    if (!base.isValid()) return '';
+
+    let tz = null;
+    try { tz = base.tz('Europe/Istanbul'); } catch (e) { tz = null; }
+
+    // If tz plugin produced a different hour, use it; otherwise fallback to adding 3 hours.
+    const chosen = (tz && tz.isValid() && tz.format('HH') !== base.format('HH')) ? tz : base.add(3, 'hour');
+
+  // Debug info removed for production
+    return chosen.format('DD.MM.YYYY HH.mm');
+  } catch (e) {
+    return '';
+  }
 }
 
 // Reusable 3D button used in actions grid
@@ -79,6 +94,8 @@ export default function GameDetailScreen({ route }) {
   const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [joining, setJoining] = useState(false);
   const timerRef = useRef(null);
 
   const loadDetail = useCallback(async () => {
@@ -182,7 +199,7 @@ export default function GameDetailScreen({ route }) {
       await gamesApi.start(gameId);
       await poll();
     } catch (e) {
-  const msg = e?.response?.data?.message || 'Oyun başlatılamadı';
+  const msg = e?.response?.data?.message || 'Oyun baslatılamadı';
   toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -202,6 +219,19 @@ export default function GameDetailScreen({ route }) {
     }
   };
 
+  const onJoin = async () => {
+    try {
+      setJoining(true);
+      await gamesApi.join(gameId, user?.id);
+      await poll();
+    } catch (e) {
+      const msg = e?.response?.data?.message || 'Katılma islemi basarısız';
+      toast.error(msg);
+    } finally {
+      setJoining(false);
+    }
+  };
+
   const onDraw = async () => {
     try {
       setSubmitting(true);
@@ -210,30 +240,34 @@ export default function GameDetailScreen({ route }) {
       // Show immediate feedback via updated detail/result state
     } catch (e) {
   const status = e?.response?.status;
-  const msg = e?.response?.data?.message || (status === 409 ? 'Zaten çektiniz' : 'Çekme işlemi başarısız');
+  const msg = e?.response?.data?.message || (status === 409 ? 'Zaten çektiniz' : 'Çekme islemi basarısız');
   toast.error(msg);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const onDelete = async () => {
-  Alert.alert('Odayı Sil', 'Bu işlemi geri alamazsınız. Odayı silmek istiyor musunuz?', [
-      { text: 'Vazgeç', style: 'cancel' },
-      { text: 'Sil', style: 'destructive', onPress: async () => {
-        try {
-          setDeleting(true);
-          await gamesApi.delete(gameId);
-          nav.navigate('Home');
-        } catch (e) {
-          const msg = e?.response?.data?.message || (e?.response?.status === 403 ? 'Sadece sahibi silebilir' : 'Silme işlemi başarısız');
-          toast.error(msg);
-        } finally {
-          setDeleting(false);
-        }
-      } }
-    ]);
+  const onDelete = () => {
+    setDeleteModalVisible(true);
   };
+
+  const cancelDelete = useCallback(() => {
+    setDeleteModalVisible(false);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    setDeleteModalVisible(false);
+    try {
+      setDeleting(true);
+      await gamesApi.delete(gameId);
+      nav.navigate('Home');
+    } catch (e) {
+      const msg = e?.response?.data?.message || (e?.response?.status === 403 ? 'Sadece sahibi silebilir' : 'Silme islemi basarısız');
+      toast.error(msg);
+    } finally {
+      setDeleting(false);
+    }
+  }, [gameId, nav, toast]);
 
   const me = user?.id;
   const myRow = useMemo(() => detail?.participants?.find(p => String(p.userId) === String(me)), [detail, me]);
@@ -250,8 +284,11 @@ export default function GameDetailScreen({ route }) {
     const order = item.drawOrder;
     return (
       <View style={styles.row}>
-        <View>
+        <View style={{ position: 'relative' }}>
           <Image source={ getAvatarSource(item.userId, item.avatarUrl) } style={styles.avatar} />
+          {String(item.userId) === String(detail?.creatorUserId) ? (
+            <Image source={require('../assets/king.png')} style={styles.kingBadge} />
+          ) : null}
           <View style={[styles.readyDot, { backgroundColor: item.isReady ? '#10b981' : '#9ca3af' }]} />
         </View>
         <View style={{ flex: 1 }}>
@@ -273,10 +310,16 @@ export default function GameDetailScreen({ route }) {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={[styles.headerBox, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.cardBorder }]}> 
+      <View style={[styles.headerBox, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.cardBorder }]}>
+        {/* creator avatar top-right (absolute) */}
+        {(() => {
+          const creator = detail?.participants?.find(p => String(p.userId) === String(detail?.creatorUserId));
+          const creatorSrc = getAvatarSource(creator?.userId ?? detail?.creatorUserId, creator?.avatarUrl);
+          return creatorSrc ? <Image pointerEvents='none' source={creatorSrc} style={styles.creatorAvatar} resizeMode='cover' /> : null;
+        })()}
         <Text style={styles.title}>Ceza</Text>
         <Text style={styles.penalty}>{detail.penaltyText}</Text>        
-        <Text style={[styles.meta, { color: theme.colors.info }]}>{detail.isGlobal ? 'Global Oyun' : 'Arkadaş Oyunu'}</Text>
+        <Text style={[styles.meta, { color: theme.colors.info }]}>{detail.isGlobal ? 'Global Oyun' : 'Arkadas Oyunu'}</Text>
   <Text style={styles.meta}>Olusturma: {formatDateTimeTR(detail.createdDate)}</Text>
         <View style={styles.metaRow}>
           <StatusPill isStarted={detail.isStarted} />
@@ -297,7 +340,7 @@ export default function GameDetailScreen({ route }) {
     </TouchableOpacity>
   </Text>
 </View>
-      </View>
+  </View>
 
       <View style={[styles.actionsBox, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.cardBorder }]}> 
         <View style={styles.actionsGrid}>
@@ -309,7 +352,7 @@ export default function GameDetailScreen({ route }) {
               disabled={submitting}
               style={styles.actionItem}
             >
-              {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Oyunu Başlat</Text>}
+              {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Oyunu Baslat</Text>}
             </Button3D>
           ) : null}
 
@@ -322,6 +365,18 @@ export default function GameDetailScreen({ route }) {
               style={styles.actionItem}
             >
               {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{myRow?.isReady ? 'Hazır Degilim' : 'Hazırım'}</Text>}
+            </Button3D>
+          ) : null}
+
+          {!myRow && !detail.isStarted ? (
+            <Button3D
+              color="#22c55e"
+              depthColor="#16a34a"
+              onPress={onJoin}
+              disabled={joining}
+              style={styles.actionItem}
+            >
+              {joining ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Katıl</Text>}
             </Button3D>
           ) : null}
 
@@ -373,6 +428,23 @@ export default function GameDetailScreen({ route }) {
         </View>
       </View>
 
+      {/* Themed delete confirmation modal */}
+      <Modal visible={deleteModalVisible} transparent animationType="fade" onRequestClose={cancelDelete}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Bu islemi geri alamazsınız. Odayı silmek istiyor musunuz?</Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={[styles.modalBtn, styles.modalBtnCancel]} onPress={cancelDelete}>
+                <Text style={styles.modalBtnText}>Vazgeç</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalBtn, styles.modalBtnDestructive]} onPress={confirmDelete}>
+                <Text style={[styles.modalBtnText, { fontWeight: '700' }]}>{deleting ? 'Siliniyor...' : 'Sil'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* My draw result inline */}
       {myRow?.hasDrawn ? (
         <View style={styles.myResultBox}>
@@ -414,6 +486,17 @@ const styles = StyleSheet.create({
   headerBox: { padding: 16, borderBottomWidth: 1 },
   title: { fontSize: 12, color: '#6b7280' },
   penalty: { fontSize: 18, fontFamily: 'LilitaOne_400Regular', color: '#8B5CF6', marginTop: 4 },
+  /* translucent background avatar (large, decorative) */
+  creatorAvatar: {
+    position: 'absolute',
+    right: -40,
+    top: -20,
+    width: 220,
+    height: 220,
+    opacity: 0.08,
+    transform: [{ rotate: '-15deg' }],
+  },
+  kingBadge: { position: 'absolute', right: -5, top: -13, width: 22, height: 22, resizeMode: 'contain', transform: [{ rotate: '30deg' }] },
   metaRow: { flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 8, flexWrap: 'wrap' },
   meta: { color: '#6b7280', fontFamily:'LilitaOne_400Regular' },
   owner: { color: '#0ea5e9', fontFamily: 'LilitaOne_400Regular' },
@@ -443,4 +526,12 @@ const styles = StyleSheet.create({
   myResultText: { fontSize: 16, fontFamily: 'LilitaOne_400Regular', marginTop: 4 },
   win: { color: '#065f46' },
   lose: { color: '#991b1b' },
+  modalBackdrop: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' },
+  modalCard: { width: '80%', backgroundColor: '#fff', padding: 18, borderRadius: 12, alignItems: 'center' },
+  modalTitle: { fontSize: 16, color: '#064e3b', marginBottom: 12, textAlign: 'center' },
+  modalActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
+  modalBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10 },
+  modalBtnCancel: { backgroundColor: '#6b7280' },
+  modalBtnDestructive: { backgroundColor: '#ef4444' },
+  modalBtnText: { color: '#fff', fontFamily: 'LilitaOne_400Regular' },
 });

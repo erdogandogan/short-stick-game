@@ -105,7 +105,7 @@ export default function GameHistoryDetailScreen({ route }) {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={[styles.headerBox, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.cardBorder }]}>
-        <Text style={[styles.title, { color: theme.colors.info }]}>{detail.isGlobal ? 'Global Oyun' : 'Arkadaş Oyunu'}</Text>
+        <Text style={[styles.title, { color: theme.colors.info }]}>{detail.isGlobal ? 'Global Oyun' : 'Arkadas Oyunu'}</Text>
         <Text style={[styles.penalty, { color: theme.colors.primary }]}>{detail.penaltyText}</Text>
         <Text style={[styles.meta, { color: theme.colors.textMuted }]}>Olusturma: {new Date(detail.createdDate).toLocaleString()}</Text>
         {result?.shortStickUsername ? (

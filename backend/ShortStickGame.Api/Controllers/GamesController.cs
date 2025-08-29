@@ -330,13 +330,13 @@ public class GamesController : ControllerBase
     [Authorize]
     public async Task<ActionResult<GameDetailDto>> SetReady([FromRoute] Guid id, [FromBody] SetReadyDto dto)
     {
-    if (dto.GameId != id) return BadRequest(new { message = "Oyun kimliği eşleşmiyor" });
+        if (dto.GameId != id) return BadRequest(new { message = "Oyun kimliği eşleşmiyor" });
         var game = await _db.Games.FirstOrDefaultAsync(g => g.Id == id);
-    if (game is null) return NotFound(new { message = "Oyun bulunamadı" });
-    if (game.IsStarted) return BadRequest(new { message = "Oyun zaten başlatıldı" });
+        if (game is null) return NotFound(new { message = "Oyun bulunamadı" });
+        if (game.IsStarted) return BadRequest(new { message = "Oyun zaten başlatıldı" });
 
         var gu = await _db.GameUsers.FirstOrDefaultAsync(x => x.GameId == id && x.UserId == dto.UserId);
-    if (gu is null) return NotFound(new { message = "Kullanıcı bu oyunun bir parçası değil" });
+        if (gu is null) return NotFound(new { message = "Kullanıcı bu oyunun bir parçası değil" });
 
         gu.IsReady = dto.IsReady;
         await _db.SaveChangesAsync();

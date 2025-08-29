@@ -18,3 +18,4 @@ frontend/web-build/
 *.env.*
 .DS_Store
 Thumbs.db
+node_modules

@@ -68,7 +68,7 @@ export default function UserProfileScreen({ navigation }) {
   toast.success('Kullanıcı adı güncellendi');
       await load();
     } catch (e) {
-  const msg = e?.response?.data?.message || 'Güncelleme başarısız';
+  const msg = e?.response?.data?.message || 'Güncelleme basarısız';
   toast.error(msg);
     } finally { setSaving(false); }
   };
@@ -81,14 +81,14 @@ export default function UserProfileScreen({ navigation }) {
   toast.success('E-posta güncellendi');
       await load();
     } catch (e) {
-  const msg = e?.response?.data?.message || 'Güncelleme başarısız';
+  const msg = e?.response?.data?.message || 'Güncelleme basarısız';
   toast.error(msg);
     } finally { setSaving(false); }
   };
 
   const onSavePassword = async () => {
   if (!user?.id) return;
-  if (!currentPassword || !newPassword) { toast.warn('Lütfen mevcut ve yeni şifreyi girin'); return; }
+  if (!currentPassword || !newPassword) { toast.warn('Lütfen mevcut ve yeni sifreyi girin'); return; }
     try {
       setSaving(true);
       await usersApi.updatePassword(user.id, currentPassword, newPassword);

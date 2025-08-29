@@ -5,6 +5,29 @@ import { gamesApi } from '../api';
 import { getAvatarSource } from '../utils/avatars';
 import { getStickSource } from '../utils/stick';
 
+// Hand image resolver (matches avatar selection logic)
+function hashStringLocal(str) {
+	let h = 0;
+ 	for (let i = 0; i < str.length; i++) {
+ 		h = ((h << 5) - h) + str.charCodeAt(i);
+ 		h |= 0;
+ 	}
+ 	return Math.abs(h);
+}
+
+function getHandSource(userId) {
+ 	const hands = [
+ 		require('../assets/monster1_hand.png'),
+ 		require('../assets/monster2_hand.png'),
+ 		require('../assets/monster3_hand.png'),
+ 		require('../assets/monster4_hand.png'),
+ 		require('../assets/monster5_hand.png'),
+ 	];
+ 	const key = String(userId || '0');
+ 	const idx = hashStringLocal(key) % hands.length;
+ 	return hands[idx];
+}
+
 // Normalize helpers (match other screens)
 function toDetailModel(d) {
 	if (!d) return null;
@@ -98,6 +121,10 @@ export default function GamePlayScreen({ route, navigation }) {
 	// Animated values per stick
 	const sticksRef = useRef([]); // Animated.ValueXY[]
 	const opacityRef = useRef([]); // Animated.Value[]
+	// Animated values per hand
+	const handsRef = useRef([]); // Animated.ValueXY[]
+	const handOpacityRef = useRef([]); // Animated.Value[]
+	const handTimersRef = useRef([]); // per-player timeouts to start hand sequences
 
 	const participants = detail?.participants || [];
 
@@ -155,6 +182,12 @@ export default function GamePlayScreen({ route, navigation }) {
 	useEffect(() => {
 		sticksRef.current = participants.map(() => new Animated.ValueXY({ x: 0, y: 0 }));
 		opacityRef.current = participants.map(() => new Animated.Value(0));
+		// prepare hands
+		handsRef.current = participants.map(() => new Animated.ValueXY({ x: 0, y: 0 }));
+		handOpacityRef.current = participants.map(() => new Animated.Value(0));
+		// clear any previously scheduled hand timers
+		handTimersRef.current.forEach(t => clearTimeout(t));
+		handTimersRef.current = [];
 	}, [participants.length]);
 
 	// Compute player positions around a circle
@@ -213,17 +246,48 @@ export default function GamePlayScreen({ route, navigation }) {
 		const cx = width / 2;
 		const cy = height / 2 - 40;
 
+		const pullBack = 100; // how short the stick initially stops before the player (px)
 		const animations = sticksRef.current.map((val, i) => {
 			const target = positions[i];
 			const stickW = 16; // render size
 			const stickH = 80;
-			const targetX = (target?.x ?? cx) - cx - stickW / 2;
-			const targetY = (target?.y ?? cy) - cy - stickH / 2;
+			// final absolute coords
+			const finalAbsX = (target?.x ?? cx);
+			const finalAbsY = (target?.y ?? cy);
+			// compute short target (stop a bit away so hand can grab and pull)
+			let dx = finalAbsX - cx;
+			let dy = finalAbsY - cy;
+			const len = Math.sqrt(dx * dx + dy * dy) || 1;
+			dx = dx / len;
+			dy = dy / len;
+			const shortAbsX = finalAbsX - dx * pullBack;
+			const shortAbsY = finalAbsY - dy * pullBack;
+			const targetX = shortAbsX - cx - stickW / 2;
+			const targetY = shortAbsY - cy - stickH / 2;
 			return Animated.parallel([
 				Animated.timing(val, { toValue: { x: targetX, y: targetY }, duration: moveDurationMs, useNativeDriver: true, easing: Easing.out(Easing.cubic) }),
 				Animated.timing(opacityRef.current[i], { toValue: 1, duration: fadeDurationMs, useNativeDriver: true }),
 			]);
 		});
+
+		// Schedule per-player hand sequences to intercept and pull sticks
+		const scheduleHandFor = (i) => {
+			// compute timings consistent with stick animation schedule
+			const stickStart = initialDelayMs + (i * staggerMs);
+			const stickEnd = stickStart + moveDurationMs;
+			// start hand a little before stick arrives
+			const handMoveDuration = 1000;
+			const handStart = Math.max(0, stickEnd - handMoveDuration - 80);
+			// give the first player extra lead so their hand isn't late compared to the stick
+			const extraLeadMs = (i === 0) ? 800 : 500;
+			const timeoutMs = Math.max(0, handStart - extraLeadMs);
+			const t = setTimeout(() => {
+				startHandSequence(i, { cx, cy, pullBack, moveDurationMs });
+			}, timeoutMs);
+			handTimersRef.current[i] = t;
+		};
+
+		for (let i = 0; i < participants.length; i++) scheduleHandFor(i);
 
 				Animated.sequence([
 				Animated.delay(initialDelayMs),
@@ -238,6 +302,57 @@ export default function GamePlayScreen({ route, navigation }) {
 			const isDistributionDone = useCallback(() => {
 				return !!(result?.isCompleted || (result?.shortStickUserId != null && result?.shortStickUserId !== undefined));
 			}, [result?.isCompleted, result?.shortStickUserId]);
+
+			// Hand sequence: modular per-player animation
+			const startHandSequence = useCallback((index, opts = {}) => {
+				const optCx = (opts && opts.cx != null) ? opts.cx : (layout.width ? layout.width / 2 : 0);
+				const optCy = (opts && opts.cy != null) ? opts.cy : (layout.height ? layout.height / 2 - 40 : 0);
+				const optPull = (opts && opts.pullBack != null) ? opts.pullBack : 36;
+				const hand = handsRef.current[index];
+				const handOp = handOpacityRef.current[index];
+				const stick = sticksRef.current[index];
+				if (!hand || !handOp || !stick) return;
+
+				// compute avatar pos and short stick absolute coords
+				const pos = positions[index] || { x: optCx, y: optCy };
+				const avatarX = pos.x;
+				const avatarY = pos.y;
+
+				// stick's short (current) absolute: use translate of stick + center
+				// animated values are relative to center cluster; we can compute end based on positions
+				const stickTargetAbsX = pos.x - optPull * ( (pos.x - optCx) / (Math.hypot(pos.x - optCx, pos.y - optCy) || 1) );
+				const stickTargetAbsY = pos.y - optPull * ( (pos.y - optCy) / (Math.hypot(pos.x - optCx, pos.y - optCy) || 1) );
+
+				// start hand near avatar and move to stick, then pull stick to avatar
+				const handStartX = avatarX - optCx; // relative to center
+				const handStartY = avatarY - optCy;
+				const handGrabX = stickTargetAbsX - optCx;
+				const handGrabY = stickTargetAbsY - optCy;
+
+				// Reset positions
+				hand.setValue({ x: handStartX, y: handStartY });
+				handOp.setValue(0);
+
+				// move hand to stick
+				const grabDur = 420;
+				const pullDur = 380;
+
+				Animated.sequence([
+					Animated.parallel([
+						Animated.timing(handOp, { toValue: 1, duration: 150, useNativeDriver: true }),
+						Animated.timing(hand, { toValue: { x: handGrabX, y: handGrabY }, duration: grabDur, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+					]),
+					// when hand reaches stick, pull both hand and stick to avatar
+					Animated.parallel([
+						Animated.timing(hand, { toValue: { x: handStartX, y: handStartY }, duration: pullDur, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
+						Animated.timing(stick, { toValue: { x: handStartX - 8, y: handStartY - 20 }, duration: pullDur, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
+						Animated.timing(opacityRef.current[index], { toValue: 1, duration: 120, useNativeDriver: true }),
+					]),
+					Animated.timing(handOp, { toValue: 0, duration: 120, useNativeDriver: true }),
+				]).start(() => {
+					// completed for this player
+				});
+			}, [positions, layout.width, layout.height]);
 
 	// Auto-close modal and go to Result screen
 	const closeAndNavigate = useCallback(() => {
@@ -258,7 +373,11 @@ export default function GamePlayScreen({ route, navigation }) {
 			}, [showModal, isDistributionDone, result]);
 
 	// On unmount, ensure timers are cleared
-	useEffect(() => () => { clearOpenTimers(); }, [clearOpenTimers]);
+	useEffect(() => () => {
+		clearOpenTimers();
+		handTimersRef.current.forEach(t => clearTimeout(t));
+		handTimersRef.current = [];
+	}, [clearOpenTimers]);
 
 	const myOutcome = useMemo(() => {
 		if (!result || !me) return null;
@@ -313,26 +432,48 @@ export default function GamePlayScreen({ route, navigation }) {
 				{/* Players around a circle */}
 				{participants.map((p, i) => {
 					const pos = positions[i] || { x: cx, y: cy };
-					const size = 56;
-		  const nameColor = getUserNameColor(p.userId || p.username);
+					const avatarSize = 56;
+					const playerWidth = 88; // match styles.player width so centering is accurate
+		 	  const nameColor = getUserNameColor(p.userId || p.username);
 					return (
-						<View key={p.userId} style={[styles.player, { left: pos.x - size / 2, top: pos.y - size / 2 }]}> 
-									<Image source={getAvatarSource(p.userId, p.avatarUrl)} style={styles.avatar} />
-			  <Text style={[styles.username, { color: nameColor }]} numberOfLines={1}>{p.username}</Text>
+						<View key={p.userId} style={[styles.player, { left: pos.x - playerWidth / 2, top: pos.y - avatarSize / 2 }]}> 
+							<Image source={getAvatarSource(p.userId, p.avatarUrl)} style={styles.avatar} />
+							<Text style={[styles.username, { color: nameColor }]} numberOfLines={1}>{p.username}</Text>
 						</View>
 					);
 				})}
 
 				{/* Central bundle of sticks and their animations to each player */}
 				<View style={[styles.centerCluster, { left: cx - 20, top: cy - 40 }]}>
+					{/* origin log image (where sticks come from) */}
+					<Image source={require('../assets/log.png')} style={styles.centerLog} resizeMode="contain" />
 					{centerSticks.map((_, i) => {
-						const translate = sticksRef.current[i] || new Animated.ValueXY({ x: 0, y: 0 });
-						const opacity = opacityRef.current[i] || new Animated.Value(0);
+						const translate = sticksRef.current[i] || (sticksRef.current[i] = new Animated.ValueXY({ x: 0, y: 0 }));
+						const opacity = opacityRef.current[i] || (opacityRef.current[i] = new Animated.Value(0));
 						return (
-							<Animated.View key={`stick-${i}`} style={[styles.stickWrap, { transform: [{ translateX: translate.x }, { translateY: translate.y }], opacity }]}> 
-								<Image source={getStickSource()} style={styles.stick} resizeMode="contain" />
-							</Animated.View>
-						);
+							<React.Fragment key={`stick-frag-${i}`}>
+								<Animated.View key={`stick-${i}`} style={[styles.stickWrap, { transform: [{ translateX: translate.x }, { translateY: translate.y }], opacity }]}> 
+									<Image source={getStickSource()} style={styles.stick} resizeMode="contain" />
+								</Animated.View>
+								{/* hand */}
+								{(() => {
+									// ensure refs exist
+									handsRef.current[i] = handsRef.current[i] || new Animated.ValueXY({ x: 0, y: 0 });
+									handOpacityRef.current[i] = handOpacityRef.current[i] || new Animated.Value(0);
+									const hand = handsRef.current[i];
+									const hOp = handOpacityRef.current[i];
+									const handSource = getHandSource(participants[i]?.userId || participants[i]?.username);
+									// rotate hand so it points from the player's position toward the center
+									const posAngle = positions[i]?.angle ?? 0; // angle from center -> player
+									const rotateToCenter = `${posAngle + Math.PI / 2}rad`; // adjust so default-down asset points inward
+									return (
+										<Animated.View key={`hand-${i}`} style={[styles.handWrap, { transform: [{ translateX: hand.x }, { translateY: hand.y }, { rotate: rotateToCenter }], opacity: hOp }]}> 
+											<Image source={handSource} style={styles.hand} resizeMode="contain" />
+										</Animated.View>
+									);
+								})()}
+							</React.Fragment>
+					);
 					})}
 				</View>
 			</View>
@@ -353,7 +494,7 @@ export default function GamePlayScreen({ route, navigation }) {
 								</Text>
 								<Image
 										source={
-										myOutcome.isShort 
+										myOutcome.isShort
 											? require('../assets/stick_short.png')  // Kaybettik görseli
 											: require('../assets/stick.png')   // Kazandık görseli
 									}
@@ -375,18 +516,21 @@ export default function GamePlayScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: '#f0fdf4' }, // light green tint
+	container: { flex: 1, backgroundColor: '#f0fdf4' },
 	center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 	headerBox: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-	penaltyLabel: { color: '#047857', fontSize: 12, fontWeight: '700' },
-	penaltyText: { color: '#111827', fontWeight: '800', fontSize: 18, marginTop: 4 },
+	penaltyLabel: { color: '#047857', fontFamily: 'LilitaOne_400Regular' },
+	penaltyText: { color: '#111827', fontFamily: 'LilitaOne_400Regular', marginTop: 4 },
 	stage: { flex: 1 },
 	player: { position: 'absolute', alignItems: 'center', width: 88 },
 	avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#e5e7eb' },
 	username: { marginTop: 6, fontSize: 12, fontFamily: 'LilitaOne_400Regular', color: '#064e3b', maxWidth: 88, textAlign: 'center' },
 	centerCluster: { position: 'absolute', width: 40, height: 80, alignItems: 'center', justifyContent: 'center' },
+	centerLog: { position: 'absolute', width: 100, height: 100, opacity: 0.95 },
 	stickWrap: { position: 'absolute', left: 0, top: 0 },
-	stick: { width: 100, height: 150, transform: [{ rotate: '-45deg' }] },
+	stick: { width: 50, height: 50, transform: [{ rotate: '-45deg' }] },
+	handWrap: { position: 'absolute', left: 0, top: 0, width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+	hand: { width: 50, height: 50, transform: [{ rotate: '0deg' }] },
 	footer: { padding: 12, backgroundColor: '#ecfdf5', borderTopWidth: 1, borderTopColor: '#d1fae5' },
 	footerText: { textAlign: 'center', color: '#065f46', fontFamily: 'LilitaOne_400Regular' },
 	modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' },

@@ -10,14 +10,20 @@
       "**/*"
     ],
     "extra": {
-  "EXPO_PUBLIC_API_BASE_URL": "http://localhost:5189",
-  "EXPO_PUBLIC_ANDROID_USE_LOCALHOST": "0"
+      "EXPO_PUBLIC_API_BASE_URL": "http://192.168.1.141:5189",
+      "EXPO_PUBLIC_ANDROID_USE_LOCALHOST": "0",
+      "eas": {
+        "projectId": "10896aec-765e-4ca3-988b-b553a2412a7a"
+      }
     },
-    
     "android": {
       "package": "com.shortstickgame.app",
       "permissions": [],
       "allowBackup": true
-    }
+    },
+    "plugins": [
+      "expo-video",
+      "expo-audio"
+    ]
   }
 }

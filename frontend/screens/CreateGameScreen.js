@@ -66,7 +66,7 @@ export default function CreateGameScreen({ navigation }) {
         await logout();
         return;
       }
-      const msg = e?.response?.data?.message || 'Oyun oluşturulamadı';
+      const msg = e?.response?.data?.message || 'Oyun olusturulamadı';
       toast.error(msg);
     } finally {
       setSubmitting(false);

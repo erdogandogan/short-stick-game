@@ -127,6 +127,10 @@ console.log('Axios instance baseURL:', api.defaults.baseURL);
 // Attach token if present
 api.interceptors.request.use(async (config) => {
   try {
+    // Allow callers to opt-out of attaching the Authorization header by
+    // setting `skipAuth: true` on the request config.
+    if (config && config.skipAuth) return config;
+
     const token = await getToken();
     if (token) {
       config.headers = config.headers || {};
@@ -139,27 +143,30 @@ api.interceptors.request.use(async (config) => {
 // Note: Do NOT prefix paths with '/' here. baseURL already ends with '/api'.
 export const authApi = {
   register: (payload) => {
-    const url = `${API_BASE_URL}/auth/register`;
-    console.log('Register API call to:', url);
-    return axios.post(url, payload, {
+    const logUrl = `${api.defaults.baseURL}auth/register`;
+    console.log('Register API call to:', logUrl);
+    return api.post('auth/register', payload, {
       headers: { 'Content-Type': 'application/json' },
-      timeout: 10000
+      timeout: 10000,
+      skipAuth: true
     });
   },
   login: (payload) => {
-    const url = `${API_BASE_URL}/auth/login`;
-    console.log('Login API call to:', url);
-    return axios.post(url, payload, {
+    const logUrl = `${api.defaults.baseURL}auth/login`;
+    console.log('Login API call to:', logUrl);
+    return api.post('auth/login', payload, {
       headers: { 'Content-Type': 'application/json' },
-      timeout: 10000
+      timeout: 10000,
+      skipAuth: true
     });
   },
   refresh: (refreshToken) => {
-    const url = `${API_BASE_URL}/auth/refresh`;
-    console.log('Refresh API call to:', url);
-    return axios.post(url, { refreshToken }, {
+    const logUrl = `${api.defaults.baseURL}auth/refresh`;
+    console.log('Refresh API call to:', logUrl);
+    return api.post('auth/refresh', { refreshToken }, {
       headers: { 'Content-Type': 'application/json' },
-      timeout: 10000
+      timeout: 10000,
+      skipAuth: true
     });
   }
 };

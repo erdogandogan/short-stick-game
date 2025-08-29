@@ -3,12 +3,12 @@ import { View, Text, TouchableOpacity, Pressable, StyleSheet } from 'react-nativ
 import { Swipeable } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { formatDateTimeTRLocal } from '../utils/formatDate';
 
 function formatDate(iso) {
   if (!iso) return '-';
   try {
-    const d = new Date(iso);
-    return d.toLocaleString();
+    return formatDateTimeTRLocal(iso);
   } catch {
     return String(iso);
   }
@@ -99,7 +99,7 @@ function GameCard({ item, onPress, showJoin, joining, onJoin, onDelete }) {
               <StatusBadge isStarted={item.isStarted} isCompleted={item.isCompleted} />
             </View>
             <View style={styles.metaRow}>
-              <Text style={[styles.meta, { color: theme.colors.dateText }]}>Olusturma: { new Date(item.createdDate).toLocaleTimeString([], { day:'2-digit', month: '2-digit', year:'numeric', hour: '2-digit', minute: '2-digit' }).replace(":", ".") }</Text>
+                          <Text style={[styles.meta, { color: theme.colors.dateText }]}>Olusturma: { formatDateTimeTRLocal(item.createdDate) }</Text>
               <Text style={[styles.meta, { color: theme.colors.participantsText }]}>Katılımcı: {item.participantCount ?? '-'} kisi</Text>
             </View>
             <View style={styles.footerRow}>

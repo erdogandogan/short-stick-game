@@ -3,6 +3,7 @@ import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, To
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { usersApi } from '../api';
+import { formatDateTimeTRLocal } from '../utils/formatDate';
 
 // Same deterministic color palette logic as HomeScreen/GamePlay
 function getUserNameColor(key) {
@@ -74,7 +75,7 @@ export default function GameHistoryScreen({ navigation }) {
       <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('GameHistoryDetail', { gameId: item.gameId })}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <Text style={styles.type}>{item.isGlobal ? 'Global' : 'Arkadas'}</Text>
-          <Text style={styles.date}>{item.completedAt ? new Date(item.completedAt).toLocaleString() : (item.startedAt ? new Date(item.startedAt).toLocaleString() : '')}</Text>
+          <Text style={styles.date}>{item.completedAt ? formatDateTimeTRLocal(item.completedAt) : (item.startedAt ? formatDateTimeTRLocal(item.startedAt) : '')}</Text>
         </View>
         <Text style={styles.penalty} numberOfLines={2}>{item.penaltyText}</Text>
         {item.shortStickUsername ? (
@@ -103,7 +104,7 @@ export default function GameHistoryScreen({ navigation }) {
             <TouchableOpacity style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.cardBorder }]} onPress={() => navigation.navigate('GameHistoryDetail', { gameId: item.gameId })}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={[styles.type, { color: theme.colors.info }]}>{item.isGlobal ? 'Global' : 'Arkadas'}</Text>
-                <Text style={[styles.date, { color: theme.colors.textMuted }]}>{item.completedAt ? new Date(item.completedAt).toLocaleString() : (item.startedAt ? new Date(item.startedAt).toLocaleString() : '')}</Text>
+                <Text style={[styles.date, { color: theme.colors.textMuted }]}>{item.completedAt ? formatDateTimeTRLocal(item.completedAt) : (item.startedAt ? formatDateTimeTRLocal(item.startedAt) : '')}</Text>
               </View>
               <Text style={[styles.penalty, { color: theme.colors.primary }]} numberOfLines={2}>{item.penaltyText}</Text>
               {item.shortStickUsername ? (

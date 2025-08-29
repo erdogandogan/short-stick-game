@@ -1,11 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, FlatList, RefreshControl, TouchableOpacity, Alert, Image, Pressable, Modal } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-dayjs.extend(utc);
-dayjs.extend(timezone);
+import { formatDateTimeTRLocal } from '../utils/formatDate';
 import { gamesApi } from '../api';
 import { addListener, subscribe, unsubscribe } from '../utils/ws';
 import * as Clipboard from 'expo-clipboard';
@@ -13,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { canShowDrawButton, canShowStartButton } from '../utils/gameUi';
 import { getAvatarSource } from '../utils/avatars';
 import { useTheme } from '../context/ThemeContext';
+import ThreeDButton from '../components/ThreeDButton';
 import { Ionicons } from '@expo/vector-icons';
 import { useToast } from '../context/ToastContext';
 
@@ -37,49 +34,6 @@ function toDetailModel(d) {
       drawOrder: p.DrawOrder ?? p.drawOrder,
     })),
   };
-}
-
-function formatDateTimeTR(dateVal) {
-  if (!dateVal) return '';
-  try {
-    // Parse as UTC baseline then convert to Istanbul.
-    const base = dayjs.utc(dateVal);
-    if (!base.isValid()) return '';
-
-    let tz = null;
-    try { tz = base.tz('Europe/Istanbul'); } catch (e) { tz = null; }
-
-    // If tz plugin produced a different hour, use it; otherwise fallback to adding 3 hours.
-    const chosen = (tz && tz.isValid() && tz.format('HH') !== base.format('HH')) ? tz : base.add(3, 'hour');
-
-  // Debug info removed for production
-    return chosen.format('DD.MM.YYYY HH.mm');
-  } catch (e) {
-    return '';
-  }
-}
-
-// Reusable 3D button used in actions grid
-function Button3D({ color, depthColor, onPress, disabled, style, children }) {
-  return (
-    <View style={[{ flexGrow: 1 }, style]}>
-      <View style={{ position: 'relative', height: 52 }}>
-        <View style={{ position: 'absolute', left: 0, right: 0, top: 4, bottom: 0, borderRadius: 12, backgroundColor: depthColor }} />
-        <Pressable
-          disabled={disabled}
-          onPress={onPress}
-          style={({ pressed }) => ([
-            { position: 'absolute', left: 0, right: 0, top: 0, bottom: 4, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: color,
-              shadowColor: '#000', shadowOpacity: pressed ? 0.05 : 0.15, shadowRadius: pressed ? 4 : 8, shadowOffset: { width: 0, height: pressed ? 2 : 4 }, elevation: pressed ? 1 : 4 },
-            pressed && { transform: [{ translateY: 4 }], bottom: 0 },
-            disabled && { opacity: 0.7 },
-          ])}
-        >
-          {children}
-        </Pressable>
-      </View>
-    </View>
-  );
 }
 
 export default function GameDetailScreen({ route }) {
@@ -293,7 +247,7 @@ export default function GameDetailScreen({ route }) {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.name} numberOfLines={1}>{item.username}</Text>
-          <Text style={styles.sub}>{new Date(item.joinDate).toLocaleString()}</Text>
+          <Text style={styles.sub}>{formatDateTimeTRLocal(item.joinDate)}</Text>
         </View>
         <View style={styles.statusCell}>
           <Text style={[styles.ready, item.isReady ? styles.readyYes : styles.readyNo]}>
@@ -320,7 +274,7 @@ export default function GameDetailScreen({ route }) {
         <Text style={styles.title}>Ceza</Text>
         <Text style={styles.penalty}>{detail.penaltyText}</Text>        
         <Text style={[styles.meta, { color: theme.colors.info }]}>{detail.isGlobal ? 'Global Oyun' : 'Arkadas Oyunu'}</Text>
-  <Text style={styles.meta}>Olusturma: {formatDateTimeTR(detail.createdDate)}</Text>
+  <Text style={styles.meta}>Olusturma: {formatDateTimeTRLocal(detail.createdDate)}</Text>
         <View style={styles.metaRow}>
           <StatusPill isStarted={detail.isStarted} />
           {iAmOwner ? <Text style={[styles.meta, styles.owner]}>Sahibi sensin</Text> : null}
@@ -345,7 +299,7 @@ export default function GameDetailScreen({ route }) {
       <View style={[styles.actionsBox, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.cardBorder }]}> 
         <View style={styles.actionsGrid}>
           {showStart ? (
-            <Button3D
+            <ThreeDButton
               color={theme.colors.primary}
               depthColor="#7C3AED"
               onPress={onStart}
@@ -353,11 +307,11 @@ export default function GameDetailScreen({ route }) {
               style={styles.actionItem}
             >
               {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Oyunu Baslat</Text>}
-            </Button3D>
+            </ThreeDButton>
           ) : null}
 
           {!detail.isStarted ? (
-            <Button3D
+            <ThreeDButton
               color={theme.colors.success}
               depthColor="#059669"
               onPress={() => onReady(!myRow?.isReady)}
@@ -365,11 +319,11 @@ export default function GameDetailScreen({ route }) {
               style={styles.actionItem}
             >
               {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{myRow?.isReady ? 'Hazır Degilim' : 'Hazırım'}</Text>}
-            </Button3D>
+            </ThreeDButton>
           ) : null}
 
           {!myRow && !detail.isStarted ? (
-            <Button3D
+            <ThreeDButton
               color="#22c55e"
               depthColor="#16a34a"
               onPress={onJoin}
@@ -377,11 +331,11 @@ export default function GameDetailScreen({ route }) {
               style={styles.actionItem}
             >
               {joining ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Katıl</Text>}
-            </Button3D>
+            </ThreeDButton>
           ) : null}
 
           {showDraw ? (
-            <Button3D
+            <ThreeDButton
               color={theme.colors.success}
               depthColor="#059669"
               onPress={onDraw}
@@ -389,33 +343,33 @@ export default function GameDetailScreen({ route }) {
               style={styles.actionItem}
             >
               {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Çubuk Çek</Text>}
-            </Button3D>
+            </ThreeDButton>
           ) : null}
 
           {(detail?.isStarted || result?.isStarted || result?.isCompleted) ? (
-            <Button3D
+            <ThreeDButton
               color={theme.colors.secondary}
               depthColor="#4b5563"
               onPress={() => nav.navigate('Result', { gameId })}
               style={styles.actionItem}
             >
               <Text style={styles.btnText}>Sonuçları Gör</Text>
-            </Button3D>
+            </ThreeDButton>
           ) : null}
 
           {result?.isCompleted ? (
-            <Button3D
+            <ThreeDButton
               color={theme.colors.secondary}
               depthColor="#4b5563"
               onPress={() => nav.navigate('GameHistoryDetail', { gameId })}
               style={styles.actionItem}
             >
               <Text style={styles.btnText}>Geçmişte Gör</Text>
-            </Button3D>
+            </ThreeDButton>
           ) : null}
 
           {iAmOwner ? (
-            <Button3D
+            <ThreeDButton
               color={theme.colors.danger}
               depthColor="#b91c1c"
               onPress={onDelete}
@@ -423,7 +377,7 @@ export default function GameDetailScreen({ route }) {
               style={styles.actionItem}
             >
               {deleting ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Odayı Sil</Text>}
-            </Button3D>
+            </ThreeDButton>
           ) : null}
         </View>
       </View>

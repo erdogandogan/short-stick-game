@@ -21,19 +21,22 @@ function darkenHex(hex, amount = 0.2) {
 
 export default function ThreeDButton({
   text,
+  children,
   onPress,
   color = '#22c55e',
   depthColor,
   textColor = '#fff',
   disabled = false,
   containerStyle,
+  // alias for backward compatibility
+  style,
   height = 52,
   textStyle,
 }) {
   const baseDepth = depthColor || darkenHex(color, 0.25);
 
   return (
-    <View style={[{ height }, containerStyle]}> 
+    <View style={[{ height }, containerStyle, style]}> 
       <View style={[styles.btn3DWrap, { height }]}> 
         <View style={[styles.btnDepth, { backgroundColor: baseDepth }]} />
         <Pressable
@@ -46,9 +49,14 @@ export default function ThreeDButton({
             disabled && styles.btnDisabled,
           ]}
         >
-          <Text style={[styles.btnText, { color: textColor }, textStyle]}>
-            {text}
-          </Text>
+          {/* If children provided, render them (keeps existing usage that passes ActivityIndicator or custom Text). Otherwise render simple text prop */}
+          {children ? (
+            children
+          ) : (
+            <Text style={[styles.btnText, { color: textColor }, textStyle]}>
+              {text}
+            </Text>
+          )}
         </Pressable>
       </View>
     </View>

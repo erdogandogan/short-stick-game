@@ -5,6 +5,7 @@ import { usersApi } from '../api';
 import { getAvatarSource } from '../utils/avatars';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
+import { formatDateTimeTRLocal } from '../utils/formatDate';
 
 function camel(obj) {
   if (!obj || typeof obj !== 'object') return obj;
@@ -172,7 +173,7 @@ export default function UserProfileScreen({ navigation }) {
         ) : (
           recent.map((g) => (
             <View key={String(g.gameId)} style={styles.recentItem}>
-              <Text style={styles.recentTitle}>#{String(g.gameId).slice(0, 8)} • {g.completedAt ? new Date(g.completedAt).toLocaleDateString() : (g.startedAt ? new Date(g.startedAt).toLocaleDateString() : '')}</Text>
+              <Text style={styles.recentTitle}>#{String(g.gameId).slice(0, 8)} • {g.completedAt ? formatDateTimeTRLocal(g.completedAt) : (g.startedAt ? formatDateTimeTRLocal(g.startedAt) : '')}</Text>
               <Text style={styles.recentSub}>{g.isShortStick ? 'Kısa çöp çektin' : 'Kurtuldun'} • {g.penaltyText}</Text>
             </View>
           ))

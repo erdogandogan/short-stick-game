@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator, FlatList, RefreshControl, Im
 import { gamesApi } from '../api';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
+import { formatDateTimeTRLocal } from '../utils/formatDate';
 
 // Same deterministic color logic as Home/GamePlay
 function getUserNameColor(key) {
@@ -107,7 +108,7 @@ export default function GameHistoryDetailScreen({ route }) {
       <View style={[styles.headerBox, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.cardBorder }]}>
         <Text style={[styles.title, { color: theme.colors.info }]}>{detail.isGlobal ? 'Global Oyun' : 'Arkadas Oyunu'}</Text>
         <Text style={[styles.penalty, { color: theme.colors.primary }]}>{detail.penaltyText}</Text>
-        <Text style={[styles.meta, { color: theme.colors.textMuted }]}>Olusturma: {new Date(detail.createdDate).toLocaleString()}</Text>
+  <Text style={[styles.meta, { color: theme.colors.textMuted }]}>Olusturma: {formatDateTimeTRLocal(detail.createdDate)}</Text>
         {result?.shortStickUsername ? (
           <Text style={[styles.meta, { color: theme.colors.textMuted }]}>
             Kısa çöp: <Text style={[styles.shortName, shortColor && { color: shortColor }]}>{result.shortStickUsername}</Text>

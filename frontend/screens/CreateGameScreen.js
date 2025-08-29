@@ -5,41 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { canCreateGame } from '../utils/validation';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
-
-// Reusable 3D Button (matches Home and Game Detail style)
-function Button3D({ color, depthColor, onPress, disabled, style, children }) {
-  return (
-    <View style={style}>
-      <View style={{ position: 'relative', height: 52 }}>
-        <View style={{ position: 'absolute', left: 0, right: 0, top: 4, bottom: 0, borderRadius: 12, backgroundColor: depthColor }} />
-        <Pressable
-          disabled={disabled}
-          onPress={onPress}
-          style={({ pressed }) => ({
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 4,
-            borderRadius: 12,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: color,
-            shadowColor: '#000',
-            shadowOpacity: pressed ? 0.05 : 0.15,
-            shadowRadius: pressed ? 4 : 8,
-            shadowOffset: { width: 0, height: pressed ? 2 : 4 },
-            elevation: pressed ? 1 : 4,
-            ...(pressed && { transform: [{ translateY: 4 }], bottom: 0 }),
-            ...(disabled && { opacity: 0.7 }),
-          })}
-        >
-          {children}
-        </Pressable>
-      </View>
-    </View>
-  );
-}
+import ThreeDButton from '../components/ThreeDButton';
 
 export default function CreateGameScreen({ navigation }) {
   const theme = useTheme();
@@ -104,7 +70,7 @@ export default function CreateGameScreen({ navigation }) {
           </TouchableOpacity>
         </View>
         <View style={{ flex: 1 }} />
-        <Button3D
+        <ThreeDButton
           color={theme.colors.primary}
           depthColor="#7C3AED"
           onPress={onCreate}
@@ -112,7 +78,7 @@ export default function CreateGameScreen({ navigation }) {
           style={{ marginTop: 24 }}
         >
           {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Oyun Olustur</Text>}
-        </Button3D>
+        </ThreeDButton>
       </View>
     </TouchableWithoutFeedback>
   );

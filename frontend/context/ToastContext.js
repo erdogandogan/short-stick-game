@@ -45,7 +45,7 @@ export function ToastProvider({ children }) {
     show,
     error: (msg, title = 'Hata') => show('error', msg, title),
     warn: (msg, title = 'Uyarı') => show('warn', msg, title),
-    success: (msg, title = 'Başarılı') => show('success', msg, title),
+    success: (msg, title = 'Basarılı') => show('success', msg, title),
     info: (msg, title = 'Bilgi') => show('info', msg, title),
     hide,
   }), [hide, show]);

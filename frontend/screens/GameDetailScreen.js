@@ -10,7 +10,6 @@ import { canShowDrawButton, canShowStartButton } from '../utils/gameUi';
 import { getAvatarSource } from '../utils/avatars';
 import { useTheme } from '../context/ThemeContext';
 import ThreeDButton from '../components/ThreeDButton';
-import { Ionicons } from '@expo/vector-icons';
 import { useToast } from '../context/ToastContext';
 
 // API'den veya WebSocket'ten gelen verileri detay modeline dönüştür

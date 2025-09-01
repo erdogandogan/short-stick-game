@@ -4,30 +4,9 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { usersApi } from '../api';
 import { formatDateTimeTRLocal } from '../utils/formatDate';
+import { getUserNameColor } from '../utils/getUserNameColor';
 
-// Same deterministic color palette logic as HomeScreen/GamePlay
-function getUserNameColor(key) {
-  const k = String(key || '');
-  let hash = 0;
-  for (let i = 0; i < k.length; i++) {
-    hash = (hash << 5) - hash + k.charCodeAt(i);
-    hash |= 0;
-  }
-  const palette = [
-    '#EF4444', // red-500
-    '#F59E0B', // amber-500
-    '#10B981', // emerald-500
-    '#3B82F6', // blue-500
-    '#8B5CF6', // violet-500
-    '#EC4899', // pink-500
-    '#14B8A6', // teal-500
-    '#F97316', // orange-500
-    '#84CC16', // lime-500
-    '#06B6D4', // cyan-500
-  ];
-  const idx = Math.abs(hash) % palette.length;
-  return palette[idx];
-}
+// username color logic extracted to ../utils/getUserNameColor
 
 function toItem(x) {
   if (!x) return null;

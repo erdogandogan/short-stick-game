@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { gamesApi } from '../api';
 import GameCard from '../components/GameCard';
 import { getAvatarSource } from '../utils/avatars';
+import { getUserNameColor } from '../utils/getUserNameColor';
 
 export default function HomeScreen({ navigation }) {
   const { user, logout } = useAuth();
@@ -29,28 +30,9 @@ export default function HomeScreen({ navigation }) {
     [user?.id, user?.avatarUrl]
   );
 
-  // Deterministic color per user for the username label
   const userNameColor = useMemo(() => {
-    const key = String(user?.id || user?.username || user?.email || '');
-    let hash = 0;
-    for (let i = 0; i < key.length; i++) {
-      hash = (hash << 5) - hash + key.charCodeAt(i);
-      hash |= 0;
-    }
-    const palette = [
-      '#EF4444', // red-500
-      '#F59E0B', // amber-500
-      '#10B981', // emerald-500
-      '#3B82F6', // blue-500
-      '#8B5CF6', // violet-500
-      '#EC4899', // pink-500
-      '#14B8A6', // teal-500
-      '#F97316', // orange-500
-      '#84CC16', // lime-500
-      '#06B6D4', // cyan-500
-    ];
-    const idx = Math.abs(hash) % palette.length;
-    return palette[idx];
+    const key = String(user?.id ?? user?.username ?? user?.email ?? '');
+    return getUserNameColor(key);
   }, [user?.id, user?.username, user?.email]);
 
   const fetchGames = useCallback(async () => {
@@ -347,10 +329,6 @@ export default function HomeScreen({ navigation }) {
   </View>
   );
 }
-
-/* Themed delete confirmation modal placed outside main component return for clarity */
-// ...existing code...
-
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#ecfdf5' },

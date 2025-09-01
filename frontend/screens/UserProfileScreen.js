@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, FlatList, Alert, TextInput, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, TextInput, ScrollView } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { usersApi } from '../api';
 import { getAvatarSource } from '../utils/avatars';
@@ -32,6 +32,8 @@ export default function UserProfileScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [showCurrentPwd, setShowCurrentPwd] = useState(false);
+  const [showNewPwd, setShowNewPwd] = useState(false);
 
   const load = useCallback(async () => {
     if (!user?.id) return;
@@ -60,6 +62,14 @@ export default function UserProfileScreen({ navigation }) {
   }, [user?.id, logout]);
 
   useEffect(() => { load(); }, [load]);
+
+  // simple validations / button enables
+  const isUsernameDirty = useMemo(() => (username?.trim() || '') !== (profile?.username || ''), [username, profile?.username]);
+  const isEmailDirty = useMemo(() => (email?.trim() || '') !== (profile?.email || ''), [email, profile?.email]);
+  const isEmailValid = useMemo(() => /\S+@\S+\.\S+/.test(email), [email]);
+  const canSaveUsername = isUsernameDirty && username.trim().length >= 3 && !saving;
+  const canSaveEmail = isEmailDirty && isEmailValid && !saving;
+  const canSavePassword = !!currentPassword && newPassword.length >= 6 && !saving;
 
   const onSaveUsername = async () => {
     if (!user?.id) return;
@@ -93,11 +103,11 @@ export default function UserProfileScreen({ navigation }) {
     try {
       setSaving(true);
       await usersApi.updatePassword(user.id, currentPassword, newPassword);
-  toast.success('Şifre güncellendi');
+  toast.success('Sifre güncellendi');
       setCurrentPassword('');
       setNewPassword('');
     } catch (e) {
-  const msg = e?.response?.data?.message || 'Güncelleme başarısız';
+  const msg = e?.response?.data?.message || 'Güncelleme basarısız';
   toast.error(msg);
     } finally { setSaving(false); }
   };
@@ -183,25 +193,101 @@ export default function UserProfileScreen({ navigation }) {
       {/* Settings */}
       <View style={[styles.section, { backgroundColor: theme.colors.surface, borderColor: theme.colors.cardBorder }]}>
         <Text style={styles.sectionTitle}>Kisisellestirme</Text>
+
+        {/* Kullanıcı adı */}
         <View style={styles.fieldRow}>
-          <Text style={styles.label}>Kullanıcı adı</Text>
-          <TextInput style={[styles.input, { backgroundColor: '#f3f4f6', borderColor: theme.colors.cardBorder }]} value={username} onChangeText={setUsername} autoCapitalize="none" />
-          <TouchableOpacity style={styles.saveBtn} onPress={onSaveUsername} disabled={saving}><Text style={styles.saveText}>Kaydet</Text></TouchableOpacity>
+          <Text style={styles.label}>Kullanıcı Adı</Text>
+          <TextInput
+            style={[styles.input, { backgroundColor: '#f3f4f6', borderColor: theme.colors.cardBorder }]}
+            value={username}
+            onChangeText={setUsername}
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholder="Yeni kullanıcı adı"
+            placeholderTextColor="#9ca3af"
+            maxLength={20}
+            returnKeyType="done"
+            onSubmitEditing={() => canSaveUsername && onSaveUsername()}
+            editable={!saving}
+          />
+          <TouchableOpacity
+            style={[styles.saveBtn, canSaveUsername ? styles.saveBtnPrimary : styles.saveBtnDisabled]}
+            onPress={onSaveUsername}
+            disabled={!canSaveUsername}
+          >
+            <Text style={styles.saveText}>Güncelle</Text>
+          </TouchableOpacity>
         </View>
+
+        {/* E-posta */}
         <View style={styles.fieldRow}>
           <Text style={styles.label}>E-posta</Text>
-          <TextInput style={[styles.input, { backgroundColor: '#f3f4f6', borderColor: theme.colors.cardBorder }]} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-          <TouchableOpacity style={styles.saveBtn} onPress={onSaveEmail} disabled={saving}><Text style={styles.saveText}>Kaydet</Text></TouchableOpacity>
+          <TextInput
+            style={[styles.input, { backgroundColor: '#f3f4f6', borderColor: theme.colors.cardBorder }]}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholder="Yeni e-posta"
+            placeholderTextColor="#9ca3af"
+            returnKeyType="done"
+            onSubmitEditing={() => canSaveEmail && onSaveEmail()}
+            editable={!saving}
+          />
+          {!isEmailValid && email?.length > 0 ? (
+            <Text style={styles.errorText}>Geçerli bir e-posta girin</Text>
+          ) : null}
+          <TouchableOpacity
+            style={[styles.saveBtn, canSaveEmail ? styles.saveBtnPrimary : styles.saveBtnDisabled]}
+            onPress={onSaveEmail}
+            disabled={!canSaveEmail}
+          >
+            <Text style={styles.saveText}>Güncelle</Text>
+          </TouchableOpacity>
         </View>
+
+        {/* Şifre */}
         <View style={styles.fieldRow}>
-          <Text style={styles.label}>Mevcut Sifre</Text>
-          <TextInput style={[styles.input, { backgroundColor: '#f3f4f6', borderColor: theme.colors.cardBorder }]} value={currentPassword} onChangeText={setCurrentPassword} secureTextEntry />
+          <Text style={styles.label}>Sifre</Text>
+          <View style={styles.inputWithToggle}>
+            <TextInput
+              style={[styles.input, styles.inputFlex, { backgroundColor: '#f3f4f6', borderColor: theme.colors.cardBorder }]}
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              secureTextEntry={!showCurrentPwd}
+              placeholder="Mevcut sifre"
+              placeholderTextColor="#9ca3af"
+              editable={!saving}
+            />
+            <TouchableOpacity onPress={() => setShowCurrentPwd(v => !v)}>
+              <Text style={styles.toggleText}>{showCurrentPwd ? 'Gizle' : 'Göster'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.inputWithToggle, styles.mt12]}>
+            <TextInput
+              style={[styles.input, styles.inputFlex, { backgroundColor: '#f3f4f6', borderColor: theme.colors.cardBorder }]}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              secureTextEntry={!showNewPwd}
+              placeholder="Yeni sifre"
+              placeholderTextColor="#9ca3af"
+              editable={!saving}
+            />
+            <TouchableOpacity onPress={() => setShowNewPwd(v => !v)}>
+              <Text style={styles.toggleText}>{showNewPwd ? 'Gizle' : 'Göster'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.saveBtn, canSavePassword ? styles.saveBtnPrimary : styles.saveBtnDisabled, { alignSelf: 'flex-start' }]}
+            onPress={onSavePassword}
+            disabled={!canSavePassword}
+          >
+            <Text style={styles.saveText}>Sifreyi Güncelle</Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.fieldRow}>
-          <Text style={styles.label}>Yeni Sifre</Text>
-          <TextInput style={[styles.input, { backgroundColor: '#f3f4f6', borderColor: theme.colors.cardBorder }]} value={newPassword} onChangeText={setNewPassword} secureTextEntry />
-        </View>
-        <TouchableOpacity style={[styles.saveBtn, { alignSelf: 'flex-start', backgroundColor: '#111827' }]} onPress={onSavePassword} disabled={saving}><Text style={styles.saveText}>Sifreyi Güncelle</Text></TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -230,7 +316,14 @@ const styles = StyleSheet.create({
   mostText: { marginTop: 0, lineHeight: 20 },
   fieldRow: { marginBottom: 12 },
   label: { color: '#374151', marginBottom: 6 },
-  input: { borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, fontFamily: 'LilitaOne_400Regular' },
+  input: { borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, fontFamily: 'LilitaOne_400Regular', color: '#111827' },
+  inputWithToggle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  inputFlex: { flex: 1 },
+  mt12: { marginTop: 12 },
+  toggleText: { color: '#2563eb', paddingHorizontal: 6, paddingVertical: 6, fontFamily: 'LilitaOne_400Regular' },
   saveBtn: { paddingHorizontal: 12, paddingVertical: 10, borderRadius: 8, marginTop: 8 },
-  saveText: { color: '#fff', fontFamily: 'LilitaOne_400Regular' }
+  saveBtnPrimary: { backgroundColor: '#111827' },
+  saveBtnDisabled: { backgroundColor: '#9ca3af' },
+  saveText: { color: '#fff', fontFamily: 'LilitaOne_400Regular' },
+  errorText: { color: '#ef4444', marginTop: 6 }
 });

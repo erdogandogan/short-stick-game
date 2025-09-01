@@ -4,8 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { gamesApi } from '../api';
 import { getAvatarSource } from '../utils/avatars';
 import { getStickSource } from '../utils/stick';
+import { getUserNameColor } from '../utils/getUserNameColor';
 
-// Hand image resolver (matches avatar selection logic)
+// Hand image resolver
 function hashStringLocal(str) {
 	let h = 0;
  	for (let i = 0; i < str.length; i++) {
@@ -63,30 +64,6 @@ function toResultModel(r) {
 			drawOrder: x.DrawOrder ?? x.drawOrder,
 		})),
 	};
-}
-
-// Deterministic username color (same palette logic as HomeScreen)
-function getUserNameColor(key) {
-	const k = String(key || '');
-	let hash = 0;
-	for (let i = 0; i < k.length; i++) {
-		hash = (hash << 5) - hash + k.charCodeAt(i);
-		hash |= 0;
-	}
-	const palette = [
-		'#EF4444', // red-500
-		'#F59E0B', // amber-500
-		'#10B981', // emerald-500
-		'#3B82F6', // blue-500
-		'#8B5CF6', // violet-500
-		'#EC4899', // pink-500
-		'#14B8A6', // teal-500
-		'#F97316', // orange-500
-		'#84CC16', // lime-500
-		'#06B6D4', // cyan-500
-	];
-	const idx = Math.abs(hash) % palette.length;
-	return palette[idx];
 }
 
 export default function GamePlayScreen({ route, navigation }) {

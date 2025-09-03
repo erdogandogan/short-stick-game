@@ -48,7 +48,7 @@ public class UserService : IUserService
             user.Username,
             user.Email,
             AvatarUrl: user.AvatarUrl,
-            JoinedAt: null, // no created-at field on user entity currently
+            JoinedAt: null, // şu anda kullanıcı varlığında oluşturulma tarihi alanı yok
             TotalGames: total,
             CompletedGames: completedGames,
             CreatedGames: createdGames,
@@ -61,8 +61,8 @@ public class UserService : IUserService
         // Total joined games: GameUsers rows
         var totalJoined = await _db.GameUsers.CountAsync(gu => gu.UserId == userId, ct);
 
-        // Total wins: number of completed games where this user's GameUser.IsShortStick == false? In short stick, loser is short stick.
-        // Requirement says "Kazandığı oyun sayısı"; interpret as games completed where user participated and NOT short stick.
+        // Toplam kazanç: bu kullanıcının GameUser.IsShortStick == false olduğu tamamlanmış oyunlar. Kısa çubukta kaybeden kısa çubuk olandır.
+        // Gereksinim "Kazandığı oyun sayısı" diyor; buna göre kullanıcı katılmış ve kısa çubuk OLMADIĞI tamamlanmış oyunları say.
         var completedUserGames = await _db.GameUsers
             .Where(gu => gu.UserId == userId)
             .Join(_db.Games, gu => gu.GameId, g => g.Id, (gu, g) => new { gu, g })
@@ -72,7 +72,7 @@ public class UserService : IUserService
         var totalShortStick = completedUserGames.Count(x => x.gu.IsShortStick);
         var totalWins = completedUserGames.Count(x => !x.gu.IsShortStick);
 
-        // Most played with: find other user with max co-participations
+        // En çok birlikte oynanan: en fazla ortak katılımı olan diğer kullanıcıyı bul
         var coCounts = await _db.GameUsers
             .Where(gu => gu.UserId == userId)
             .Join(_db.GameUsers, a => a.GameId, b => b.GameId, (a, b) => new { a, b })
@@ -95,7 +95,7 @@ public class UserService : IUserService
 
     public async Task<IReadOnlyList<RecentGameItemDto>> GetRecentGamesAsync(Guid userId, int count = 5, CancellationToken ct = default)
     {
-        // Games where user participated (by GameUsers) or created
+        // Kullanıcının katıldığı (GameUsers) veya oluşturduğu oyunlar
         var gameIdsQuery = _db.Games
             .Where(g => g.CreatorUserId == userId)
             .Select(g => g.Id)

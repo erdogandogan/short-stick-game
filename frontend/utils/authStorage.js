@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 const TOKEN_KEY = 'auth_token';
 const REFRESH_KEY = 'refresh_token';
 
-// Prefer SecureStore on native when actually available; use AsyncStorage on web
+// Mümkünse yerelde SecureStore'u tercih et; web'de AsyncStorage kullan
 async function canUseSecureStore() {
   try {
     if (Platform.OS === 'web') return false;
@@ -16,7 +16,7 @@ async function canUseSecureStore() {
   }
 }
 
-// Simple localStorage helpers for web
+// Web için basit localStorage yardımcıları
 const webStorage = {
   get: (key) => {
     try { return typeof window !== 'undefined' ? window.localStorage.getItem(key) : null; } catch { return null; }

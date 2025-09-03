@@ -6,7 +6,7 @@ import { usersApi } from '../api';
 import { formatDateTimeTRLocal } from '../utils/formatDate';
 import { getUserNameColor } from '../utils/getUserNameColor';
 
-// username color logic extracted to ../utils/getUserNameColor
+// kullanıcı adı renk mantığı ../utils/getUserNameColor içine çıkarıldı
 
 function toItem(x) {
   if (!x) return null;

@@ -89,7 +89,7 @@ export function useAuth() {
   return ctx;
 }
 
-// helper: convert PascalCase properties coming from .NET to camelCase
+// yardımcı: .NET'ten gelen PascalCase alanları camelCase'e dönüştür
 function camelizeKeys(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   const mapKey = (k) => k.charAt(0).toLowerCase() + k.slice(1);

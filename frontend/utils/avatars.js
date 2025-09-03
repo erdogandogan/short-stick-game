@@ -1,6 +1,6 @@
-// Resolve an avatar image for a user.
-// If a remote AvatarUrl is provided, use it. Otherwise, pick one of the
-// local monster images deterministically from userId.
+// Bir kullanıcı için avatar görselini belirle.
+// Uzak bir AvatarUrl verilmişse onu kullan. Aksi halde,
+// userId'den deterministik olarak yerel canavar görsellerinden birini seç.
 
 const monsters = [
   require('../assets/monster1.png'),

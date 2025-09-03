@@ -10,7 +10,8 @@ using ShortStickGame.Api.Services;
 // Uygulama yapıcısı oluşturulur.
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services
+
+// Servisleri ekle
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -45,23 +46,23 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Options
+// Seçenekler
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 
-// Password hasher
+// Parola karma (hash) hizmeti
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
-// Token service
+// Token hizmeti
 builder.Services.AddSingleton<ITokenService, TokenService>();
 
-// Game service
+// Oyun hizmeti
 builder.Services.AddScoped<IGameService, GameService>();
-// User service
+// Kullanıcı hizmeti
 builder.Services.AddScoped<IUserService, UserService>();
-// WebSocket manager (broadcast game updates)
+// WebSocket yöneticisi (oyun güncellemelerini yayınlar)
 builder.Services.AddSingleton<IGameWebSocketManager, GameWebSocketManager>();
 
-// Auth
+// Kimlik doğrulama
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -69,7 +70,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    // We resolve TokenService later in app to get parameters; here bind directly from configuration
+    // TokenService parametrelerini uygulama aşamasında elde ediyoruz; burada doğrudan yapılandırmadan bağlıyoruz
     var secret = builder.Configuration["Jwt:Secret"] ?? string.Empty;
     var issuer = builder.Configuration["Jwt:Issuer"];
     var audience = builder.Configuration["Jwt:Audience"];
@@ -88,10 +89,10 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// Controllers
+// Denetleyiciler
 builder.Services.AddControllers();
 
-// CORS: allow Expo web dev server during development
+// CORS: geliştirme sırasında Expo web geliştirme sunucusuna izin ver
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
@@ -109,7 +110,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Ensure database is created and migrations are applied automatically
+// Veritabanının oluşturulduğunu ve göçlerin (migration) otomatik uygulandığını garanti et
 try
 {
     using var scope = app.Services.CreateScope();
@@ -122,13 +123,13 @@ catch (Exception ex)
     Console.WriteLine($"Database migration failed: {ex.Message}");
 }
 
-// Ensure Kestrel listens on all interfaces so physical devices on LAN can reach the API in dev
-// launchSettings.json binds to localhost by default; override here for dev runs
+// Geliştirmede Kestrel'in tüm arayüzlerde dinlediğinden emin ol (LAN'daki fiziksel cihazlar API'ye erişebilsin)
+// launchSettings.json varsayılan olarak localhost'a bağlar; geliştirme çalışmaları için burada geçersiz kıl
 if (app.Environment.IsDevelopment())
 {
     var httpUrl = "http://0.0.0.0:5189";
     var httpsUrl = "https://0.0.0.0:7189";
-    // If ASPNETCORE_URLS isn't set, use our defaults
+    // ASPNETCORE_URLS ayarlı değilse, varsayılanlarımızı kullan
     var configuredUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
     if (string.IsNullOrWhiteSpace(configuredUrls))
     {
@@ -139,7 +140,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseRouting();
-// Enable WebSockets
+// WebSocket'leri etkinleştir
 app.UseWebSockets();
 if (app.Environment.IsDevelopment())
 {
@@ -150,7 +151,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Simple WebSocket endpoint for game updates
+// Oyun güncellemeleri için basit WebSocket uç noktası
 app.Map("/ws", async (HttpContext ctx, IGameWebSocketManager wsManager) =>
 {
     if (!ctx.WebSockets.IsWebSocketRequest)
@@ -165,7 +166,7 @@ app.Map("/ws", async (HttpContext ctx, IGameWebSocketManager wsManager) =>
 
 app.MapGet("/api/hello", () => Results.Ok("Hello World"));
 
-// Health/simple root info
+// Sağlık durumu/basit kök bilgi
 app.MapGet("/", () => new { name = "Short Stick Game API", version = "0.1.0" });
 
 app.Run();

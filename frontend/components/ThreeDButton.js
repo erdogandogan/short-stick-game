@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Pressable, Text, StyleSheet } from 'react-native';
 
-// Simple darken utility for #rrggbb colors
+// #rrggbb renkleri için basit koyulaştırma yardımcı fonksiyonu
 function darkenHex(hex, amount = 0.2) {
   try {
     const normalized = hex.replace('#', '');
@@ -28,7 +28,7 @@ export default function ThreeDButton({
   textColor = '#fff',
   disabled = false,
   containerStyle,
-  // alias for backward compatibility
+  // geriye dönük uyumluluk için takma ad
   style,
   height = 52,
   textStyle,
@@ -49,7 +49,7 @@ export default function ThreeDButton({
             disabled && styles.btnDisabled,
           ]}
         >
-          {/* If children provided, render them (keeps existing usage that passes ActivityIndicator or custom Text). Otherwise render simple text prop */}
+          {/* children verilmişse onları göster (ActivityIndicator veya özel Text geçen mevcut kullanımı korur). Aksi halde basit text prop'unu render et */}
           {children ? (
             children
           ) : (

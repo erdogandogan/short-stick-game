@@ -10,7 +10,7 @@ export default function JoinGameScreen({ navigation }) {
   const theme = useTheme();
   const { user, logout } = useAuth();
   const toast = useToast();
-  const [code, setCode] = useState(''); // GameId or invite code
+  const [code, setCode] = useState(''); // GameId veya davet kodu
   const [submitting, setSubmitting] = useState(false);
 
   const canSubmit = useMemo(() => code.trim().length > 0 && !submitting, [code, submitting]);

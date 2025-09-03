@@ -8,7 +8,7 @@ export function ToastProvider({ children }) {
   const theme = useTheme();
   const [toast, setToast] = useState(null); // { type, title, message, id }
   const timerRef = useRef(null);
-  const translate = useRef(new Animated.Value(80)).current; // from bottom
+  const translate = useRef(new Animated.Value(80)).current; // alttan
   const opacity = useRef(new Animated.Value(0)).current;
 
   const hide = useCallback((immediate = false) => {
@@ -24,17 +24,17 @@ export function ToastProvider({ children }) {
   }, [opacity, translate]);
 
   const show = useCallback((type, message, title) => {
-    // collapse duplicates quickly
+  // yinelenenleri hızlıca birleştir
     const id = Date.now();
     setToast({ type, title, message, id });
-    // animate in
+  // içeri animasyonla
     opacity.setValue(0);
     translate.setValue(80);
     Animated.parallel([
       Animated.timing(translate, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
       Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
     ]).start();
-    // auto-hide
+  // otomatik gizle
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => hide(false), 2800);
   }, [hide, opacity, translate]);

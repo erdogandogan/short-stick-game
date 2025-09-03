@@ -22,7 +22,7 @@ public class GameUser
 
     public DateTime JoinDate { get; set; } = DateTime.UtcNow;
 
-    // Ready state before game starts
+    // Oyun başlamadan önceki hazır olma durumu
     public bool IsReady { get; set; } = false;
 
     public bool HasDrawn { get; set; } = false;

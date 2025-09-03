@@ -1,4 +1,4 @@
-// Simple validation helpers used by screens and tests
+// Ekranlar ve testler tarafından kullanılan basit doğrulama yardımcıları
 
 export function isGuid(str) {
   if (!str || typeof str !== 'string') return false;

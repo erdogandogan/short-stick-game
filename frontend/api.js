@@ -3,12 +3,12 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { getToken, getRefreshToken, saveToken, saveRefreshToken } from './utils/authStorage';
 
-// Backend base URL
-// - Android emulator: 10.0.2.2
-// - Android/iOS physical device via USB: prefer adb reverse to localhost
-// - You can override with EXPO_PUBLIC_API_BASE_URL (e.g., http://192.168.1.10:5189)
+// Backend temel URL'si
+// - Android emülatörü: 10.0.2.2
+// - USB ile bağlı Android/iOS fiziksel cihaz: localhost'a bağlanmak için adb reverse tercih edilir
+// - EXPO_PUBLIC_API_BASE_URL ile geçersiz kılabilirsiniz (örn. http://192.168.1.10:5189)
 export const API_BASE_URL = (() => {
-  // Prefer runtime env var; fallback to Expo extra in app.json/app.config
+  // Çalışma zamanındaki ortam değişkenini tercih et; yoksa app.json/app.config içindeki Expo extra'ya düş
   const fromEnv = (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_API_BASE_URL)
     || (Constants?.expoConfig?.extra?.EXPO_PUBLIC_API_BASE_URL)
     || (Constants?.expoConfig?.extra?.apiBaseUrl);
@@ -28,22 +28,22 @@ export const API_BASE_URL = (() => {
   console.log('Environment check:', debugInfo);
 
   if (fromEnv) {
-    // Normalize and fix common pitfalls for native:
-    // - https + self-signed cert -> Network Error on device/emulator
-    // - localhost on Android -> should use 10.0.2.2
+  // Native için sık karşılaşılan sorunları normalize et ve düzelt:
+  // - https + self-signed sertifika -> cihaz/emülatörde Network Error
+  // - Android'de localhost -> 10.0.2.2 kullanılmalı
   let envUrl = fromEnv.trim().replace(/\/$/, '');
-  // Remove accidental angle brackets from placeholder copies like <192.168.1.10>
+  // <192.168.1.10> gibi yer tutucu kopyalardan kalan açı parantezlerini temizle
   envUrl = envUrl.replace(/[<>]/g, '');
     const lower = envUrl.toLowerCase();
 
-    // If pointing to localhost on Android, decide based on Expo host:
-    // - If Expo host is localhost/127.0.0.1 (USB + --localhost), KEEP localhost (works via adb reverse)
-    // - Otherwise (likely emulator/LAN), use 10.0.2.2
+  // Android'de localhost'a işaret ediyorsa, Expo host'una göre karar ver:
+  // - Expo host localhost/127.0.0.1 ise (USB + --localhost), localhost'u KORU (adb reverse ile çalışır)
+  // - Aksi halde (muhtemelen emülatör/LAN), 10.0.2.2 kullan
   if (platform === 'android' && (lower.includes('localhost') || lower.includes('127.0.0.1'))) {
       const expoHostStr = (expoHost || '').toLowerCase();
       const expoIsLocal = expoHostStr.includes('localhost') || expoHostStr.startsWith('127.0.0.1');
       if (forceAndroidLocalhost || expoIsLocal) {
-        // On native, prefer HTTP and map Kestrel's default HTTPS port 7189 -> HTTP 5189
+  // Native'de HTTP'yi tercih et ve Kestrel'in varsayılan HTTPS portunu 7189'dan HTTP 5189'a eşle
         let adjusted = envUrl;
         if (platform !== 'web' && adjusted.toLowerCase().startsWith('https://')) {
           adjusted = 'http://' + adjusted.slice('https://'.length);
@@ -54,7 +54,7 @@ export const API_BASE_URL = (() => {
         console.log('ENV points to localhost on Android; keeping localhost (USB/--localhost or override):', fixed);
         return fixed;
       }
-      // If Expo is running in LAN mode, prefer Expo host IP for physical devices
+  // Expo LAN modda çalışıyorsa, fiziksel cihazlar için Expo host IP'sini tercih et
       const hostMatch = (expoHost || '').match(/^(.*):\d+$/);
       const expoHostIp = hostMatch ? hostMatch[1] : null;
       if (expoHostIp && expoHostIp !== 'localhost' && expoHostIp !== '127.0.0.1') {
@@ -62,20 +62,20 @@ export const API_BASE_URL = (() => {
         console.log('ENV points to localhost on Android; Expo LAN detected, using host IP:', fixedLan);
         return fixedLan;
       }
-      // Otherwise assume emulator
+  // Aksi halde emülatör varsay
       const fixed = `http://10.0.2.2:5189/api`;
       console.log('ENV points to localhost on Android; no LAN host, using emulator loopback:', fixed);
       return fixed;
     }
 
-    // On native platforms, prefer http in dev to avoid self-signed TLS issues
+  // Native platformlarda, self-signed TLS sorunlarından kaçınmak için geliştirmede http'yi tercih et
     if (platform !== 'web' && lower.startsWith('https://')) {
       envUrl = 'http://' + envUrl.slice('https://'.length);
       envUrl = envUrl.replace(':7189', ':5189');
       console.log('ENV uses HTTPS; switching to HTTP for dev on native:', envUrl);
     }
 
-    // If envUrl has no protocol, assume http
+  // envUrl protokol içermiyorsa http varsay
     if (!/^https?:\/\//i.test(envUrl)) {
       envUrl = `http://${envUrl}`;
     }
@@ -84,7 +84,7 @@ export const API_BASE_URL = (() => {
     return `${envUrl.replace(/\/$/, '')}/api`;
   }
 
-  // If running on a physical device with Expo, use the LAN IP from the Expo dev server if available
+  // Expo ile fiziksel cihazda çalışıyorsa, mümkünse Expo geliştirme sunucusunun LAN IP'sini kullan
   const hostFromExpo = (() => {
     const uri = expoHost || '';
     const match = uri.match(/^(.*):\d+$/);
@@ -97,14 +97,14 @@ export const API_BASE_URL = (() => {
     return url;
   }
 
-  // Android Emulator fallback when no Expo host could be determined
+  // Expo host belirlenemediğinde Android Emülatör için geri dönüş
   if (platform === 'android') {
     const androidUrl = 'http://10.0.2.2:5189/api';
     console.log('FORCING Android API URL (emulator fallback):', androidUrl);
     return androidUrl;
   }
 
-  // Default to localhost (iOS simulator or web)
+  // Varsayılan olarak localhost (iOS simülatörü veya web)
   const baseUrl = `http://localhost:5189/api`;
   console.log('Using default localhost API URL:', baseUrl);
   return baseUrl;
@@ -113,7 +113,7 @@ export const API_BASE_URL = (() => {
 console.log('Final API Base URL being used:', API_BASE_URL);
 
 export const api = axios.create({
-  // Ensure trailing slash so relative paths like 'games' resolve to '/api/games'
+  // Sondaki eğik çizgiyi garanti et ki 'games' gibi göreli yollar '/api/games' olarak çözülsün
   baseURL: API_BASE_URL.endsWith('/') ? API_BASE_URL : `${API_BASE_URL}/`,
   headers: {
     'Content-Type': 'application/json'
@@ -121,14 +121,14 @@ export const api = axios.create({
   timeout: 10000  // 10 second timeout
 });
 
-// Double-check the actual baseURL after creation
+// Oluşturulduktan sonra gerçek baseURL'i tekrar kontrol et
 console.log('Axios instance baseURL:', api.defaults.baseURL);
 
-// Attach token if present
+// Token varsa isteğe ekle
 api.interceptors.request.use(async (config) => {
   try {
-    // Allow callers to opt-out of attaching the Authorization header by
-    // setting `skipAuth: true` on the request config.
+  // Çağıranların Authorization header eklememeyi seçebilmesi için
+  // istek ayarında `skipAuth: true` kullanmalarına izin ver.
     if (config && config.skipAuth) return config;
 
     const token = await getToken();
@@ -140,7 +140,7 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Note: Do NOT prefix paths with '/' here. baseURL already ends with '/api'.
+// Not: Burada yolların başına '/' EKLEMEYİN. baseURL zaten '/api' ile biter.
 export const authApi = {
   register: (payload) => {
     const logUrl = `${api.defaults.baseURL}auth/register`;
@@ -173,7 +173,7 @@ export const authApi = {
 
 export default api;
 
-// Response interceptor: handle 401 by trying refresh flow once
+// Yanıt interceptor'ı: 401 durumunda bir kez yenileme akışını dene
 let isRefreshing = false;
 let pendingQueue = [];
 
@@ -193,7 +193,7 @@ api.interceptors.response.use(
       original._retry = true;
       try {
         if (isRefreshing) {
-          // queue until refresh finishes
+          // yenileme bitene kadar kuyruğa al
           const token = await new Promise((resolve, reject) => {
             pendingQueue.push({ resolve, reject });
           });
@@ -227,9 +227,9 @@ api.interceptors.response.use(
   }
 );
 
-// Games API helpers
+// Oyunlar API yardımcıları
 export const gamesApi = {
-  // Use absolute paths to avoid baseURL join pitfalls
+  // baseURL birleştirme tuzaklarından kaçınmak için mutlak yollar kullan
   list: () => api.get('games'),
   detail: (id) => api.get(`games/${id}`),
   create: (payload) => api.post('games/create', payload),
@@ -243,7 +243,7 @@ export const gamesApi = {
   delete: (id) => api.delete(`games/${id}`),
 };
 
-// Users API helpers
+// Kullanıcılar API yardımcıları
 export const usersApi = {
   history: (userId) => api.get(`users/${userId}/games`),
   profile: (userId) => api.get(`users/${userId}/profile`),

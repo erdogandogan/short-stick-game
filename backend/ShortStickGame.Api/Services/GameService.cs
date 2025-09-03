@@ -33,17 +33,17 @@ public class GameService : IGameService
         if (game.Participants.Count < 2)
             throw new InvalidOperationException("Başlatmak için en az 2 katılımcı gerekli");
 
-        // Ensure all participants are ready
+        // Tüm katılımcıların hazır olduğundan emin ol
         var notReady = await _db.GameUsers.CountAsync(x => x.GameId == gameId && !x.IsReady, ct);
         if (notReady > 0)
             throw new InvalidOperationException("Tüm katılımcılar hazır olmalıdır");
 
-        // Ensure all participants are valid users (DB constraint already ensures this)
+        // Tüm katılımcıların geçerli kullanıcı olduğundan emin ol (DB kısıtı zaten bunu garanti eder)
         game.IsStarted = true;
         game.StartedDate = DateTime.UtcNow;
 
-        // Initialize draw order random sequence and pre-determine short stick to synchronize all clients.
-        // This ensures that right after start, every client can animate distribution in sync and then show results.
+        // Çekme sırasını rastgele belirle ve kısa çubuğu önceden tespit et; böylece tüm istemciler senkronize animasyon gösterebilir.
+        // Bu sayede başlangıçtan hemen sonra dağıtım animasyonu eşzamanlı olur ve ardından sonuçlar gösterilir.
         var participants = await _db.GameUsers.Where(gu => gu.GameId == gameId).ToListAsync(ct);
         var rnd = new Random();
         var shuffled = participants.OrderBy(_ => rnd.Next()).ToList();
@@ -52,7 +52,7 @@ public class GameService : IGameService
             shuffled[i].DrawOrder = i + 1; // 1-based order
         }
 
-        // Randomly assign exactly one short stick holder
+        // Rastgele olarak tam bir kişiye kısa çubuk ataması yap
         if (shuffled.Count > 0)
         {
             var shortIndex = rnd.Next(0, shuffled.Count);
@@ -60,11 +60,11 @@ public class GameService : IGameService
             {
                 var gu = shuffled[i];
                 gu.IsShortStick = (i == shortIndex);
-                // Mark as drawn to finalize immediately (clients will still show animation UI)
+                // Hemen finalize etmek için çekilmiş olarak işaretle (istemciler yine de animasyon arayüzünü gösterecek)
                 gu.HasDrawn = true;
             }
 
-            // Complete the game immediately so result is consistent for all players
+            // Tüm oyuncular için tutarlı olması adına oyunu hemen tamamla
             game.IsCompleted = true;
             game.CompletedDate = DateTime.UtcNow;
         }
@@ -77,16 +77,16 @@ public class GameService : IGameService
     public async Task<DrawResultDto> DrawAsync(DrawDto dto, CancellationToken ct = default)
     {
         var game = await _db.Games.FirstOrDefaultAsync(g => g.Id == dto.GameId, ct);
-    if (game is null) throw new KeyNotFoundException("Oyun bulunamadı");
-    if (!game.IsStarted) throw new InvalidOperationException("Oyun başlatılmadı");
-    if (game.IsCompleted) throw new InvalidOperationException("Oyun zaten tamamlandı");
+        if (game is null) throw new KeyNotFoundException("Oyun bulunamadı");
+        if (!game.IsStarted) throw new InvalidOperationException("Oyun başlatılmadı");
+        if (game.IsCompleted) throw new InvalidOperationException("Oyun zaten tamamlandı");
 
         var gu = await _db.GameUsers.Include(x => x.User)
             .FirstOrDefaultAsync(x => x.GameId == dto.GameId && x.UserId == dto.UserId, ct);
-    if (gu is null) throw new KeyNotFoundException("Kullanıcı bu oyunun bir parçası değil");
-    if (gu.HasDrawn) throw new InvalidOperationException("Kullanıcı zaten çekti");
+        if (gu is null) throw new KeyNotFoundException("Kullanıcı bu oyunun bir parçası değil");
+        if (gu.HasDrawn) throw new InvalidOperationException("Kullanıcı zaten çekti");
 
-        // Enforce turn by DrawOrder (find smallest DrawOrder not yet drawn)
+        // Çekme sırasını DrawOrder ile uygula (henüz çekmemiş en küçük DrawOrder'ı bul)
         var next = await _db.GameUsers
             .Where(x => x.GameId == dto.GameId && !x.HasDrawn)
             .OrderBy(x => x.DrawOrder)
@@ -94,11 +94,11 @@ public class GameService : IGameService
         if (next is not null && next.UserId != dto.UserId)
             throw new InvalidOperationException("Çekme sırası sizde değil");
 
-        // Determine if short stick already assigned
+        // Kısa çubuğun daha önce atanıp atanmadığını belirle
         var alreadyShort = await _db.GameUsers.AnyAsync(x => x.GameId == dto.GameId && x.IsShortStick, ct);
 
-        // Draw logic: assign short stick randomly to exactly one user across the game.
-        // If not yet assigned and this is the last draw remaining, force assign to this user.
+        // Çekme mantığı: oyun genelinde rastgele olarak tam bir kullanıcıya kısa çubuk ata.
+        // Henüz atanmadıysa ve bu son çekimse, bu kullanıcıya zorunlu olarak ata.
         var total = await _db.GameUsers.CountAsync(x => x.GameId == dto.GameId, ct);
         var drawnCount = await _db.GameUsers.CountAsync(x => x.GameId == dto.GameId && x.HasDrawn, ct);
         bool isLastDraw = drawnCount == total - 1;
@@ -109,19 +109,19 @@ public class GameService : IGameService
             if (isLastDraw)
                 assignShort = true;
             else
-                assignShort = Random.Shared.Next(0, total - drawnCount) == 0; // small chance per draw
+                assignShort = Random.Shared.Next(0, total - drawnCount) == 0; // her çekimde küçük bir olasılık
         }
 
         gu.HasDrawn = true;
         if (assignShort)
             gu.IsShortStick = true;
 
-        // If all drawn, mark game completed
+        // Herkes çektiyse oyunu tamamlandı olarak işaretle
         if (drawnCount + 1 == total)
         {
             game.IsCompleted = true;
             game.CompletedDate = DateTime.UtcNow;
-            // Ensure exactly one short stick: if none set due to randomness, set the last drawer
+            // Tam olarak bir kısa çubuk olduğundan emin ol: rastgelelik nedeniyle hiç ayarlanmamışsa, son çeken kişiye ayarla
             if (!await _db.GameUsers.AnyAsync(x => x.GameId == dto.GameId && x.IsShortStick, ct))
             {
                 gu.IsShortStick = true;
@@ -141,7 +141,7 @@ public class GameService : IGameService
     public async Task<GameResultDto> GetResultAsync(Guid gameId, CancellationToken ct = default)
     {
         var game = await _db.Games.FirstOrDefaultAsync(g => g.Id == gameId, ct);
-    if (game is null) throw new KeyNotFoundException("Oyun bulunamadı");
+        if (game is null) throw new KeyNotFoundException("Oyun bulunamadı");
 
         var rows = await _db.GameUsers
             .Where(x => x.GameId == gameId)

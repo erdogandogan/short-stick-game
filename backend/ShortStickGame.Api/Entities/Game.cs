@@ -28,9 +28,9 @@ public class Game
 
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
-    // If true, the game is visible to all authenticated users (discoverable without joining)
+    // True ise, oyun tüm kimliği doğrulanmış kullanıcılara görünür (katılmadan keşfedilebilir)
     public bool IsGlobal { get; set; } = false;
 
-    // Navigation
+    // Gezinme (ilişkili varlıklar)
     public ICollection<GameUser> Participants { get; set; } = new List<GameUser>();
 }

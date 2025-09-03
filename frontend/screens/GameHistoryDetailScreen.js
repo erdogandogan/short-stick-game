@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import { formatDateTimeTRLocal } from '../utils/formatDate';
 import { getUserNameColor } from '../utils/getUserNameColor';
 
-// color logic extracted to ../utils/getUserNameColor
+// renk mantığı ../utils/getUserNameColor içine çıkarıldı
 
 function toDetailModel(d) {
   if (!d) return null;
@@ -73,7 +73,7 @@ export default function GameHistoryDetailScreen({ route }) {
     const nameColor = getUserNameColor(item.userId || item.username);
     return (
       <View style={[styles.row, isShort && styles.rowShort]}>
-        {/* Simple placeholder avatar via initials */}
+  {/* Baş harflerle basit yer tutucu avatar */}
         <View style={styles.avatar}><Text style={styles.avatarText}>{(item.username || '?').slice(0,1).toUpperCase()}</Text></View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.name, { color: nameColor }, isShort && styles.highlight]} numberOfLines={1}>{item.username}</Text>

@@ -120,11 +120,11 @@ public class GamesController : ControllerBase
                 g.CompletedDate,
                 g.CreatorUserId,
                 ParticipantCount = _db.GameUsers.Count(gu => gu.GameId == g.Id),
-                IsOwner = g.CreatorUserId == userId // this will be true only if user owns it; otherwise false
+                IsOwner = g.CreatorUserId == userId // sadece kullanıcı sahipse true; aksi halde false
             })
             .ToListAsync();
 
-        // 4) Combine in-memory: include globals too, prefer owner entry when duplicate
+        // 4) Bellekte birleştir: globalleri de dahil et, kopya varsa sahibi olanı tercih et
         var combined = ownerRows
             .Concat(participantRows)
             .Concat(globalRows)
@@ -158,12 +158,12 @@ public class GamesController : ControllerBase
     [Authorize]
     public async Task<ActionResult<GameDetailDto>> Create([FromBody] GameCreateDto dto)
     {
-        // Get userId from JWT (sub or nameidentifier)
+        // Kullanıcı kimliğini JWT'den al (sub veya nameidentifier)
         var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub) ?? User.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
             return Unauthorized(new { message = "Geçersiz oturum" });
 
-        // Basic validation: ensure creator exists
+        // Basit doğrulama: oluşturucu kullanıcının var olduğundan emin ol
         var creatorExists = await _db.Users.AnyAsync(u => u.Id == userId);
         if (!creatorExists)
             return NotFound(new { message = "Oluşturucu kullanıcı bulunamadı" });
@@ -178,7 +178,7 @@ public class GamesController : ControllerBase
         };
 
         _db.Games.Add(game);
-        // Also add the creator as a participant by default
+        // Oluşturucuyu varsayılan olarak katılımcı olarak ekle
         _db.GameUsers.Add(new GameUser
         {
             GameId = game.Id,
@@ -242,7 +242,7 @@ public class GamesController : ControllerBase
         return Ok(dto);
     }
 
-    // Public/global games visible to all authenticated users
+    // Tüm kimliği doğrulanmış kullanıcılar tarafından görülebilen herkese açık/global oyunlar
     // GET: /api/games/global
     [HttpGet("global")]
     [Authorize]
@@ -297,8 +297,8 @@ public class GamesController : ControllerBase
                 u => u.Id,
                 (gu, u) => new { gu, u }
             )
-            // Order by entity fields (EF-translatable), then project
-            .OrderBy(x => x.gu.DrawOrder == null) // nulls last
+            // Varlık alanlarına göre sırala (EF tarafından çevrilebilir), ardından projeksiyon uygula
+            .OrderBy(x => x.gu.DrawOrder == null) // null'lar en sonda
             .ThenBy(x => x.gu.DrawOrder)
             .ThenBy(x => x.u.Username)
             .Select(x => new GameParticipantDto(
@@ -355,7 +355,7 @@ public class GamesController : ControllerBase
     {
         try
         {
-            // Only game owner can start
+            // Sadece oyun sahibi başlatabilir
             var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub) ?? User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 return Unauthorized(new { message = "Invalid token" });
@@ -365,7 +365,7 @@ public class GamesController : ControllerBase
 
             var dto = await _gameService.StartGameAsync(id);
             await _ws.BroadcastAsync(id, "game-started", dto);
-            // Immediately send the final result snapshot so all clients can present personal modals consistently
+            // Tüm istemciler kişisel modalları tutarlı şekilde gösterebilsin diye sonuç özetini hemen yayınla
             try
             {
                 var summary = await _gameService.GetResultAsync(id);
@@ -396,7 +396,7 @@ public class GamesController : ControllerBase
     public async Task<ActionResult<DrawResultDto>> Draw([FromRoute] Guid id, [FromBody] DrawDto dto)
     {
         if (dto.GameId != id) return BadRequest(new { message = "Mismatched game id" });
-        // Only the authenticated user can draw for themselves
+        // Sadece kimliği doğrulanmış kullanıcı kendisi için çekim yapabilir
         var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub) ?? User.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var authUserId))
             return Unauthorized(new { message = "Invalid token" });
@@ -443,7 +443,7 @@ public class GamesController : ControllerBase
         }
     }
 
-    // Game state (progress + whose turn)
+    // Oyun durumu (ilerleme + kimin sırası)
     // GET: /api/games/{id}/state
     [HttpGet("{id:guid}/state")]
     [AllowAnonymous]
@@ -452,7 +452,7 @@ public class GamesController : ControllerBase
         var game = await _db.Games.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id);
         if (game is null) return NotFound(new { message = "Game not found" });
 
-        // next order = smallest DrawOrder not yet drawn
+        // sonraki sıra = henüz çekilmemiş en küçük DrawOrder
         var next = await _db.GameUsers
             .AsNoTracking()
             .Where(x => x.GameId == id && !x.HasDrawn)

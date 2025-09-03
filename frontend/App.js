@@ -80,7 +80,7 @@ export default function App() {
     LilitaOne_400Regular,
   });
 
-  // Dev-time diagnostics: log if any screens are undefined/invalid React components
+  // Geliştirme zamanı teşhis: herhangi bir ekran tanımsız/geçersiz React bileşeni ise logla
   React.useEffect(() => {
     const screens = {
       StartScreen,
@@ -107,11 +107,11 @@ export default function App() {
 
   React.useEffect(() => {
     if (!fontsLoaded) return;
-    // Apply default font for TextInput via defaultProps (safe)
+  // TextInput için varsayılan fontu defaultProps ile uygula (güvenli)
     if (!TextInput.defaultProps) TextInput.defaultProps = {};
     TextInput.defaultProps.style = [TextInput.defaultProps.style, { fontFamily: 'LilitaOne_400Regular' }];
 
-    // Force Text to use Lilita One and drop fontWeight to avoid Android fallback to system fonts
+  // Text bileşenini Lilita One kullanmaya zorla ve Android'in sistem fontuna düşmesini önlemek için fontWeight'i temizle
     if (!globalThis.__LILITA_TEXT_PATCHED__) {
       globalThis.__LILITA_TEXT_PATCHED__ = true;
       const originalRender = Text.render;
@@ -120,7 +120,7 @@ export default function App() {
         if (!element) return element;
         const originalStyle = element.props?.style;
         const flat = StyleSheet.flatten(originalStyle) || {};
-        // Remove explicit fontFamily/fontWeight that could break custom font on Android
+  // Android'de özel fontu bozabilecek fontFamily/fontWeight alanlarını temizle
         delete flat.fontFamily;
         delete flat.fontWeight;
         const newStyle = [{ fontFamily: 'LilitaOne_400Regular' }, flat];

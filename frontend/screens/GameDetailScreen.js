@@ -42,7 +42,7 @@ export default function GameDetailScreen({ route }) {
   const theme = useTheme();
   const toast = useToast();
   const [detail, setDetail] = useState(null);
-  const [result, setResult] = useState(null); // from /result
+  const [result, setResult] = useState(null); // /result sonucları için durum
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -82,7 +82,7 @@ export default function GameDetailScreen({ route }) {
         })),
       });
     } catch (e) {
-      // 404 until game exists/has result; ignore
+      // Oyun oluşana/sonuç oluşana kadar 404 olabilir; yok say
     }
   }, [gameId]);
 
@@ -92,7 +92,7 @@ export default function GameDetailScreen({ route }) {
 
   useEffect(() => { poll(); }, [poll]);
 
-  // Live updates via WebSocket subscription
+  // WebSocket aboneliği ile canlı güncellemeler
   useEffect(() => {
     const off = addListener((msg) => {
       if (!msg || String(msg.gameId) !== String(gameId)) return;
@@ -102,7 +102,7 @@ export default function GameDetailScreen({ route }) {
       } else if (t === 'drawn' || t === 'game-completed') {
         const payload = msg.payload || {};
         if (payload.Results || payload.results) {
-          // full result payload
+          // Tam sonuç yükü
           setResult({
             isStarted: payload.IsStarted ?? payload.isStarted,
             isCompleted: payload.IsCompleted ?? payload.isCompleted,
@@ -116,7 +116,7 @@ export default function GameDetailScreen({ route }) {
             })),
           });
         } else {
-          // fetch latest result snapshot
+          // En son sonuç anlık görüntüsünü getir
           gamesApi.result(gameId).then(r => {
             const rr = r.data || {};
             setResult({
@@ -139,7 +139,7 @@ export default function GameDetailScreen({ route }) {
     return () => { if (off) off(); unsubscribe(gameId); };
   }, [gameId]);
 
-  // Navigate to gameplay when started
+  // Başladığında oyun ekranına yönlendir
   useEffect(() => {
     if (detail?.isStarted) {
       nav.replace('GamePlay', { gameId });
@@ -189,8 +189,8 @@ export default function GameDetailScreen({ route }) {
     try {
       setSubmitting(true);
       await gamesApi.draw(gameId, user?.id);
-      await poll();
-      // Show immediate feedback via updated detail/result state
+  await poll();
+  // Güncellenen detay/sonuç durumuyla anlık geri bildirim göster
     } catch (e) {
   const status = e?.response?.status;
   const msg = e?.response?.data?.message || (status === 409 ? 'Zaten çektiniz' : 'Çekme islemi basarısız');
@@ -264,7 +264,7 @@ export default function GameDetailScreen({ route }) {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={[styles.headerBox, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.cardBorder }]}>
-        {/* creator avatar top-right (absolute) */}
+  {/* yaratıcının avatarı sağ üstte (mutlak konum) */}
         {(() => {
           const creator = detail?.participants?.find(p => String(p.userId) === String(detail?.creatorUserId));
           const creatorSrc = getAvatarSource(creator?.userId ?? detail?.creatorUserId, creator?.avatarUrl);
@@ -381,7 +381,7 @@ export default function GameDetailScreen({ route }) {
         </View>
       </View>
 
-      {/* Themed delete confirmation modal */}
+  {/* Tema uyumlu silme onayı modali */}
       <Modal visible={deleteModalVisible} transparent animationType="fade" onRequestClose={cancelDelete}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
@@ -398,7 +398,7 @@ export default function GameDetailScreen({ route }) {
         </View>
       </Modal>
 
-      {/* My draw result inline */}
+  {/* Benim çekiliş sonucum (satır içi) */}
       {myRow?.hasDrawn ? (
         <View style={styles.myResultBox}>
           <Text style={styles.myResultTitle}>Sonucun</Text>
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
   headerBox: { padding: 16, borderBottomWidth: 1 },
   title: { fontSize: 12, color: '#6b7280' },
   penalty: { fontSize: 18, fontFamily: 'LilitaOne_400Regular', color: '#8B5CF6', marginTop: 4 },
-  /* translucent background avatar (large, decorative) */
+  /* yarı saydam arka plan avatarı (büyük, dekoratif) */
   creatorAvatar: {
     position: 'absolute',
     right: -40,

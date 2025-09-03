@@ -45,7 +45,7 @@ export default function ResultScreen({ route, navigation }) {
 
   useEffect(() => { load(); }, [load]);
 
-  // Determine my result for banner
+  // Başlık için kendi sonucumu belirle
   const myRes = useMemo(() => {
     if (!data || !me) return null;
     return (data.results || []).find(r => String(r.userId) === String(me));

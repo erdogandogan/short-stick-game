@@ -34,12 +34,12 @@ public class UsersController : ControllerBase
         return true;
     }
 
-    // GET: /api/users/{id}/profile
+    // GET: /api/users/{id}/profile — Profil bilgisi getirir
     [HttpGet("{id:guid}/profile")]
     [Authorize]
     public async Task<ActionResult<UserProfileDto>> GetProfile([FromRoute] Guid id)
     {
-    if (!TryGetAuthUserId(out var authId)) return Unauthorized(new { message = "Geçersiz oturum" });
+        if (!TryGetAuthUserId(out var authId)) return Unauthorized(new { message = "Geçersiz oturum" });
         if (authId != id) return Forbid();
         try
         {
@@ -49,34 +49,34 @@ public class UsersController : ControllerBase
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
     }
 
-    // GET: /api/users/{id}/stats
+    // GET: /api/users/{id}/stats — Kullanıcının istatistiklerini getirir
     [HttpGet("{id:guid}/stats")]
     [Authorize]
     public async Task<ActionResult<UserStatsDto>> GetStats([FromRoute] Guid id)
     {
-    if (!TryGetAuthUserId(out var authId)) return Unauthorized(new { message = "Geçersiz oturum" });
+        if (!TryGetAuthUserId(out var authId)) return Unauthorized(new { message = "Geçersiz oturum" });
         if (authId != id) return Forbid();
         var dto = await _userService.GetStatsAsync(id);
         return Ok(dto);
     }
 
-    // GET: /api/users/{id}/recent-games
+    // GET: /api/users/{id}/recent-games — Kullanıcının son oyunlarını listeler
     [HttpGet("{id:guid}/recent-games")]
     [Authorize]
     public async Task<ActionResult<IEnumerable<RecentGameItemDto>>> GetRecent([FromRoute] Guid id)
     {
-    if (!TryGetAuthUserId(out var authId)) return Unauthorized(new { message = "Geçersiz oturum" });
+        if (!TryGetAuthUserId(out var authId)) return Unauthorized(new { message = "Geçersiz oturum" });
         if (authId != id) return Forbid();
         var items = await _userService.GetRecentGamesAsync(id, 5);
         return Ok(items);
     }
 
-    // PUT: /api/users/{id}/update-username
+    // PUT: /api/users/{id}/update-username — Kullanıcı adını günceller
     [HttpPut("{id:guid}/update-username")]
     [Authorize]
     public async Task<IActionResult> UpdateUsername([FromRoute] Guid id, [FromBody] UpdateUsernameDto dto)
     {
-    if (!TryGetAuthUserId(out var authId)) return Unauthorized(new { message = "Geçersiz oturum" });
+        if (!TryGetAuthUserId(out var authId)) return Unauthorized(new { message = "Geçersiz oturum" });
         if (authId != id) return Forbid();
         try
         {
@@ -88,7 +88,7 @@ public class UsersController : ControllerBase
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
     }
 
-    // PUT: /api/users/{id}/update-email
+    // PUT: /api/users/{id}/update-email — E-posta adresini günceller
     [HttpPut("{id:guid}/update-email")]
     [Authorize]
     public async Task<IActionResult> UpdateEmail([FromRoute] Guid id, [FromBody] UpdateEmailDto dto)
@@ -105,7 +105,7 @@ public class UsersController : ControllerBase
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
     }
 
-    // PUT: /api/users/{id}/update-password
+    // PUT: /api/users/{id}/update-password — Şifreyi günceller
     [HttpPut("{id:guid}/update-password")]
     [Authorize]
     public async Task<IActionResult> UpdatePassword([FromRoute] Guid id, [FromBody] UpdatePasswordDto dto)
@@ -123,16 +123,16 @@ public class UsersController : ControllerBase
     }
 
     // GET: /api/users/{id}/games
-    // Returns games the user participated in or owned, with participants and short stick info
+    // Kullanıcının sahibi olduğu veya katıldığı oyunları, katılımcılar ve kısa çubuk bilgisiyle birlikte döner
     [HttpGet("{id:guid}/games")]
     [Authorize]
     public async Task<ActionResult<IEnumerable<GameHistoryItemDto>>> GetUserGames([FromRoute] Guid id)
     {
-        // Only allow user to fetch their own history
-    if (!TryGetAuthUserId(out var authUserId)) return Unauthorized(new { message = "Geçersiz oturum" });
+        // Sadece kullanıcının kendi geçmişini almasına izin ver
+        if (!TryGetAuthUserId(out var authUserId)) return Unauthorized(new { message = "Geçersiz oturum" });
         if (authUserId != id) return Forbid();
 
-        // Gather game ids where user is owner or participant
+        // Kullanıcının sahibi olduğu veya katılımcı olduğu oyun kimliklerini topla
         var ownerQuery = _db.Games
             .AsNoTracking()
             .Where(g => g.CreatorUserId == id)
@@ -151,7 +151,7 @@ public class UsersController : ControllerBase
         if (ids.Count == 0)
             return Ok(Array.Empty<GameHistoryItemDto>());
 
-        // Load games with basic fields
+        // Oyunları temel alanlarıyla birlikte yükle
         var games = await _db.Games
             .AsNoTracking()
             .Where(g => ids.Contains(g.Id))
@@ -165,7 +165,7 @@ public class UsersController : ControllerBase
             })
             .ToListAsync();
 
-        // Load participants for these games
+        // Bu oyunların katılımcılarını yükle
         var participants = await _db.GameUsers
             .AsNoTracking()
             .Where(gu => ids.Contains(gu.GameId))
@@ -183,7 +183,7 @@ public class UsersController : ControllerBase
             )
             .ToListAsync();
 
-        // Compose history in memory grouped per game
+        // Bellekte oyun başına gruplayarak geçmiş listesini oluştur
         var list = games
             .OrderByDescending(g => g.CompletedDate ?? g.StartedDate ?? DateTime.MinValue)
             .Select(g =>

@@ -15,7 +15,7 @@ export default function RegisterScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Android back button: always go to Start ("Test") when on Register
+  // Android geri tuşu: Kayıt ekranındayken her zaman Başlangıç ("Test") ekranına git
   useFocusEffect(
     useCallback(() => {
       const onBack = () => { navigation.navigate('Test'); return true; };
@@ -24,7 +24,7 @@ export default function RegisterScreen({ navigation }) {
     }, [navigation])
   );
 
-  // Intercept navigation back (gestures or programmatic) and route to Start
+  // Geri navigasyonunu (jestler veya programatik) yakala ve Başlangıç ekranına yönlendir
   useEffect(() => {
     const sub = navigation.addListener('beforeRemove', (e) => {
       if (e.data.action.type === 'GO_BACK' || e.data.action.type === 'POP') {
@@ -48,7 +48,7 @@ export default function RegisterScreen({ navigation }) {
     try {
       setSubmitting(true);
       await register({ username, email, password });
-      // navigation will switch based on auth context
+  // navigasyon, kimlik doğrulama bağlamına göre değişecek
     } catch (e) {
       const msg = e?.response?.data?.message || 'Kayıt basarısız';
       toast.error(msg);

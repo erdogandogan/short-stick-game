@@ -3,7 +3,7 @@ module.exports = function(api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      // Reanimated plugin must be listed last
+  // Reanimated eklentisi en sonda olmalı
       'react-native-reanimated/plugin',
     ],
   };

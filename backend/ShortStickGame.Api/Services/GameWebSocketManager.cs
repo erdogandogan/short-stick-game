@@ -70,7 +70,7 @@ public class GameWebSocketManager : IGameWebSocketManager
                 }
                 catch
                 {
-                    // ignore malformed messages
+                    // hatalı biçimlendirilmiş mesajları yok say
                 }
             }
         }

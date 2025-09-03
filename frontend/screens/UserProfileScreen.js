@@ -27,7 +27,7 @@ export default function UserProfileScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // editable
+  // düzenlenebilir
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -63,7 +63,7 @@ export default function UserProfileScreen({ navigation }) {
 
   useEffect(() => { load(); }, [load]);
 
-  // simple validations / button enables
+  // basit doğrulamalar / buton aktiflikleri
   const isUsernameDirty = useMemo(() => (username?.trim() || '') !== (profile?.username || ''), [username, profile?.username]);
   const isEmailDirty = useMemo(() => (email?.trim() || '') !== (profile?.email || ''), [email, profile?.email]);
   const isEmailValid = useMemo(() => /\S+@\S+\.\S+/.test(email), [email]);
@@ -112,13 +112,13 @@ export default function UserProfileScreen({ navigation }) {
     } finally { setSaving(false); }
   };
 
-  // Use local random avatar (based on user id) when no custom avatar URL is set
+  // Özel avatar URL'si yoksa, yerel rastgele avatar (kullanıcı id'sine göre) kullan
   const avatarSrc = useMemo(
     () => getAvatarSource(profile?.id || user?.id, profile?.avatarUrl),
     [profile?.id, profile?.avatarUrl, user?.id]
   );
 
-  // Avatar for the user you played with the most
+  // En çok birlikte oynadığın kullanıcı için avatar
   const mostPlayedAvatarSrc = useMemo(() => {
     const uid = stats?.mostPlayedWithUserId;
     if (!uid) return null;

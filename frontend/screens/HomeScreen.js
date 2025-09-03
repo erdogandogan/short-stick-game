@@ -13,18 +13,18 @@ export default function HomeScreen({ navigation }) {
   const { user, logout } = useAuth();
   const toast = useToast();
   const [games, setGames] = useState([]);
-  const [filter, setFilter] = useState('all'); // all | mine | joined | global | active | completed
+  const [filter, setFilter] = useState('all'); // all | mine | joined | global | active | completed (filtre anahtarı)
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [joiningId, setJoiningId] = useState(null);
-  const [buttonsTop, setButtonsTop] = useState(null); // for fade overlay positioning
-  const [buttonsHeight, setButtonsHeight] = useState(0); // for list bottom padding
-  // Themed delete confirmation modal
+  const [buttonsTop, setButtonsTop] = useState(null); // solma katmanı konumu için
+  const [buttonsHeight, setButtonsHeight] = useState(0); // listenin alt boşluğu için
+  // Tema uyumlu silme onay modali
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // Match avatar logic with UserProfileScreen: use assigned URL if present,
-  // otherwise deterministic local monster by user id.
+  // UserProfileScreen ile avatar mantığını eşle: URL varsa onu kullan,
+  // yoksa kullanıcı id'sine göre deterministik yerel canavar.
   const avatarSrc = useMemo(
     () => getAvatarSource(user?.id, user?.avatarUrl),
     [user?.id, user?.avatarUrl]
@@ -38,7 +38,7 @@ export default function HomeScreen({ navigation }) {
   const fetchGames = useCallback(async () => {
     try {
       const { data } = await gamesApi.list();
-      // Expect PascalCase from .NET; normalize to camelCase for JS
+  // .NET'ten PascalCase beklenir; JS için camelCase'e normalize et
       const normalized = data.map((g) => ({
         id: g.Id ?? g.id,
         penaltyText: g.PenaltyText ?? g.penaltyText,
@@ -55,14 +55,14 @@ export default function HomeScreen({ navigation }) {
   setGames(normalized);
     } catch (e) {
       if (e?.response?.status === 401) {
-        // token invalid; force logout to go login screen
+  // token geçersiz; giriş ekranına dönmek için çıkış yap
         await logout();
         return;
       }
   console.error('Games fetch error:', e?.message, e?.response?.data);
   toast.error('Oyunlar yüklenirken bir sorun olustu');
     } finally {
-      // Avoid flicker after logout redirect
+  // Çıkış sonrası yönlendirmede titremeyi önle
       setLoading((prev) => (prev ? false : prev));
       setRefreshing(false);
     }
@@ -72,10 +72,10 @@ export default function HomeScreen({ navigation }) {
     fetchGames();
   }, [fetchGames]);
 
-  // Refetch whenever the screen gains focus (e.g., returning from Create or Detail)
+  // Ekran odağı her kazanıldığında tekrar getir (örn. Create veya Detail'den dönünce)
   useFocusEffect(
     useCallback(() => {
-      // Avoid double spinner: use pull-to-refresh state when refocusing after initial load
+  // Çift spinner'ı önle: ilk yüklemeden sonra yeniden odaklanınca pull-to-refresh durumunu kullan
       if (!loading) {
         setRefreshing(true);
       }
@@ -107,7 +107,7 @@ export default function HomeScreen({ navigation }) {
   const renderItem = ({ item }) => {
     const canJoin = !item.isOwner; // not owner; backend Join checks started state
     const onDelete = async () => {
-  // open themed modal instead of native alert
+  // yerel uyarı yerine tema uyumlu modal aç
   setDeleteTarget(item);
   setDeleteModalVisible(true);
     };
@@ -165,7 +165,7 @@ export default function HomeScreen({ navigation }) {
         return games.filter((g) => g.isCompleted);
       case 'all':
       default:
-  // Exclude completed games from the 'All' view; show them only in 'completed'
+  // 'All' görünümünde tamamlanmış oyunları hariç tut; sadece 'completed'da göster
   return games.filter((g) => !g.isCompleted);
     }
   }, [games, filter]);
@@ -196,7 +196,7 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       </ImageBackground>
 
-      {/* Filters - horizontal scroll */}
+  {/* Filtreler - yatay kaydırma */}
       <View style={styles.filtersWrap}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersRow}>
           {[
@@ -226,14 +226,14 @@ export default function HomeScreen({ navigation }) {
           renderItem={renderItem}
           contentContainerStyle={[
             filteredGames.length === 0 ? { flex: 1 } : { paddingVertical: 8 },
-            { paddingBottom: Math.max(buttonsHeight + 24, 24) }, // ensure content can scroll under bottom buttons
+            { paddingBottom: Math.max(buttonsHeight + 24, 24) }, // içeriğin alt butonların altından kayabilmesini sağla
           ]}
           ListEmptyComponent={<ListEmpty />}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         />
       )}
 
-      {/* Fade overlay starting from the very bottom */}
+  {/* En alttan başlayan solma katmanı */}
       {(LG || View) === View ? (
         <View style={[styles.fadeOverlay, { bottom: 0 }]} />
       ) : (
@@ -258,7 +258,7 @@ export default function HomeScreen({ navigation }) {
           setButtonsHeight(nativeEvent.layout.height);
         }}
       >
-        {/* 3D Button: Yeni Oyun */}
+  {/* 3D Buton: Yeni Oyun */}
         <View style={styles.buttonCol}>
           <View style={[styles.btn3DWrap]}>
             <View style={[styles.btnDepth, { backgroundColor: '#0284c7' }]} />
@@ -275,7 +275,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
-        {/* 3D Button: Oyuna Katıl */}
+  {/* 3D Buton: Oyuna Katıl */}
         <View style={styles.buttonCol}>
           <View style={[styles.btn3DWrap]}>
             <View style={[styles.btnDepth, { backgroundColor: '#16a34a' }]} />
@@ -292,7 +292,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
-        {/* 3D Button: Oynadıklarım */}
+  {/* 3D Buton: Oynadıklarım */}
         <View style={styles.buttonCol}>
           <View style={[styles.btn3DWrap]}>
             <View style={[styles.btnDepth, { backgroundColor: '#4b5563' }]} />
@@ -309,7 +309,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
       </View>
-      {/* Themed delete confirmation modal */}
+  {/* Tema uyumlu silme onay modali */}
       <Modal visible={deleteModalVisible} transparent animationType="fade" onRequestClose={cancelDelete}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>

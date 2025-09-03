@@ -6,7 +6,7 @@ import { getAvatarSource } from '../utils/avatars';
 import { getStickSource } from '../utils/stick';
 import { getUserNameColor } from '../utils/getUserNameColor';
 
-// Hand image resolver
+// El görseli seçici
 function hashStringLocal(str) {
 	let h = 0;
  	for (let i = 0; i < str.length; i++) {
@@ -29,7 +29,7 @@ function getHandSource(userId) {
  	return hands[idx];
 }
 
-// Normalize helpers (match other screens)
+// Normalleştirme yardımcıları (diğer ekranlarla uyumlu)
 function toDetailModel(d) {
 	if (!d) return null;
 	return {
@@ -71,7 +71,7 @@ export default function GamePlayScreen({ route, navigation }) {
 	const { user } = useAuth();
 	const me = user?.id != null ? String(user.id) : null;
 
-	// Layout state
+	// Yerleşim (layout) durumu
 	const [layout, setLayout] = useState({ width: Dimensions.get('window').width, height: Dimensions.get('window').height });
 	const [detail, setDetail] = useState(null);
 	const [result, setResult] = useState(null);
@@ -82,10 +82,10 @@ export default function GamePlayScreen({ route, navigation }) {
 		const animationStartedRef = useRef(false);
 		const expectedAnimEndAtRef = useRef(null);
 		const distributionPlannedRef = useRef(false);
-		// Modal open timers
+		// Modal açma zamanlayıcıları
 		const openCheckTimerRef = useRef(null);
 		const openFallbackTimerRef = useRef(null);
-		// Latest state refs for timer callbacks
+		// Zamanlayıcı geri çağrıları için en güncel durum referansları
 		const latestDetailRef = useRef(null);
 		const latestResultRef = useRef(null);
 		const latestParticipantsCountRef = useRef(0);
@@ -95,13 +95,13 @@ export default function GamePlayScreen({ route, navigation }) {
 			if (openFallbackTimerRef.current) { clearTimeout(openFallbackTimerRef.current); openFallbackTimerRef.current = null; }
 		}, []);
 
-	// Animated values per stick
+	// Her çubuk için animasyon değerleri
 	const sticksRef = useRef([]); // Animated.ValueXY[]
 	const opacityRef = useRef([]); // Animated.Value[]
-	// Animated values per hand
+	// Her el için animasyon değerleri
 	const handsRef = useRef([]); // Animated.ValueXY[]
 	const handOpacityRef = useRef([]); // Animated.Value[]
-	const handTimersRef = useRef([]); // per-player timeouts to start hand sequences
+	const handTimersRef = useRef([]); // oyuncu başına el dizilerini başlatma zamanlayıcıları
 
 	const participants = detail?.participants || [];
 
@@ -122,7 +122,7 @@ export default function GamePlayScreen({ route, navigation }) {
 		}
 	}, [gameId]);
 
-	// Keep latest state in refs so setTimeout callbacks see fresh values
+	// setTimeout geri çağrıları güncel değerleri görsün diye son durumu referanslarda tut
 	useEffect(() => { latestDetailRef.current = detail; }, [detail]);
 	useEffect(() => { latestResultRef.current = result; }, [result]);
 	useEffect(() => { latestParticipantsCountRef.current = participants.length; }, [participants.length]);
@@ -136,7 +136,7 @@ export default function GamePlayScreen({ route, navigation }) {
 		return !!(r?.isCompleted || allDrawn || allResults);
 	}, []);
 
-	// Poll result lightly while on this screen (in case backend finalizes during animation)
+	// Bu ekrandayken (animasyon sürerken arka uç bitirirse diye) sonuçları aralıklı kontrol et
 	useEffect(() => {
 		load();
 	}, [load]);
@@ -155,27 +155,27 @@ export default function GamePlayScreen({ route, navigation }) {
 			return () => clearInterval(id);
 		}, [gameId]);
 
-	// Prepare animated values when participants change
+	// Katılımcılar değiştiğinde animasyon değerlerini hazırla
 	useEffect(() => {
 		sticksRef.current = participants.map(() => new Animated.ValueXY({ x: 0, y: 0 }));
 		opacityRef.current = participants.map(() => new Animated.Value(0));
-		// prepare hands
+		// elleri hazırla
 		handsRef.current = participants.map(() => new Animated.ValueXY({ x: 0, y: 0 }));
 		handOpacityRef.current = participants.map(() => new Animated.Value(0));
-		// clear any previously scheduled hand timers
+		// daha önce planlanan el zamanlayıcılarını temizle
 		handTimersRef.current.forEach(t => clearTimeout(t));
 		handTimersRef.current = [];
 	}, [participants.length]);
 
-	// Compute player positions around a circle
+	// Oyuncu konumlarını bir daire etrafında hesapla
 	const positions = useMemo(() => {
 		const { width, height } = layout;
 		const cx = width / 2;
-		const cy = height / 2 - 40; // give some room for headers
+		const cy = height / 2 - 40; // başlıklar için biraz boşluk bırak
 		const n = Math.max(participants.length, 1);
 		const radius = Math.max(80, Math.min(width, height) * 0.34);
 		return participants.map((_, i) => {
-			// start angle at -90deg (top) and go clockwise
+			// başlangıç açısı -90° (üst) ve saat yönünde
 			const angle = (-Math.PI / 2) + (2 * Math.PI * i) / n;
 			const x = cx + radius * Math.cos(angle);
 			const y = cy + radius * Math.sin(angle);
@@ -183,39 +183,39 @@ export default function GamePlayScreen({ route, navigation }) {
 		});
 	}, [layout, participants.length]);
 
-	// Start distribution animation when layout and participants ready (only once per screen entry)
+	// Yerleşim ve katılımcılar hazır olduğunda dağıtım animasyonunu başlat (ekrana girişte bir kez)
 	useEffect(() => {
 		if (!participants.length || !layout.width || distributionPlannedRef.current) return;
 		setAnimating(true);
 			animationStartedRef.current = true;
 			distributionPlannedRef.current = true;
-			// Clear any previously scheduled open timers (fresh planning)
+			// Daha önce planlanan açma zamanlayıcılarını temizle (baştan planla)
 			clearOpenTimers();
-			// Pre-calculate expected animation finish time (sequence delay + last start + duration)
+			// Beklenen animasyon bitiş zamanını önceden hesapla (dizi gecikmesi + son başlangıç + süre)
 			const count = participants.length;
 			const initialDelayMs = 1500;
 			const staggerMs = 1500;
 			const moveDurationMs = 1500;
-			// Tie fade duration to movement (bounded)
+			// Solma süresini harekete bağla (sınırlı)
 			const fadeDurationMs = Math.min(600, Math.max(250, Math.round(moveDurationMs * 0.3)));
 			const expectedEnd = Date.now() + initialDelayMs + ((count - 1) * staggerMs) + moveDurationMs;
 			expectedAnimEndAtRef.current = expectedEnd;
 			animationEndAtRef.current = null;
 
-			// Schedule a post-animation check to open modal if results ready
+			// Sonuçlar hazırsa animasyon sonrası kontrol planla ve modali aç
 			const checkDelay = Math.max(0, (expectedEnd + 120) - Date.now());
 			openCheckTimerRef.current = setTimeout(() => {
-				// Only open if not already showing and distribution logically done
-				if (!openCheckTimerRef.current) return; // was cleared
+				// Zaten açık değilse ve dağıtım mantıksal olarak bittiyse aç
+				if (!openCheckTimerRef.current) return; // temizlendi
 				if (!showModal && getIsDistributionDone()) {
 					setShowModal(true);
 				}
 			}, checkDelay);
 
-			// Fallback: after a grace window, open regardless
+			// Yedek: kısa bir beklemeden sonra her halükarda aç
 			const fallbackDelay = Math.max(0, (expectedEnd + 5000) - Date.now());
 			openFallbackTimerRef.current = setTimeout(() => {
-				if (!openFallbackTimerRef.current) return; // was cleared
+				if (!openFallbackTimerRef.current) return; // temizlendi
 				if (!showModal && isDistributionDone()) setShowModal(true);
 			}, fallbackDelay);
 
@@ -223,15 +223,15 @@ export default function GamePlayScreen({ route, navigation }) {
 		const cx = width / 2;
 		const cy = height / 2 - 40;
 
-		const pullBack = 100; // how short the stick initially stops before the player (px)
+		const pullBack = 100; // çubuğun oyuncudan önce duracağı kısa mesafe (px)
 		const animations = sticksRef.current.map((val, i) => {
 			const target = positions[i];
-			const stickW = 16; // render size
+			const stickW = 16; // render boyutu
 			const stickH = 80;
-			// final absolute coords
+			// nihai mutlak koordinatlar
 			const finalAbsX = (target?.x ?? cx);
 			const finalAbsY = (target?.y ?? cy);
-			// compute short target (stop a bit away so hand can grab and pull)
+			// kısa hedefi hesapla (el kavrayıp çekebilsin diye biraz uzakta dursun)
 			let dx = finalAbsX - cx;
 			let dy = finalAbsY - cy;
 			const len = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -247,15 +247,15 @@ export default function GamePlayScreen({ route, navigation }) {
 			]);
 		});
 
-		// Schedule per-player hand sequences to intercept and pull sticks
+		// Çubukları yakalayıp çekmek için oyuncu başına el dizilerini planla
 		const scheduleHandFor = (i) => {
-			// compute timings consistent with stick animation schedule
+			// Çubuk animasyon takvimine uygun zamanlamaları hesapla
 			const stickStart = initialDelayMs + (i * staggerMs);
 			const stickEnd = stickStart + moveDurationMs;
-			// start hand a little before stick arrives
+			// El, çubuk gelmeden biraz önce başlasın
 			const handMoveDuration = 1000;
 			const handStart = Math.max(0, stickEnd - handMoveDuration - 80);
-			// give the first player extra lead so their hand isn't late compared to the stick
+			// İlk oyuncuya ekstra önden başlama ver (elin çubuğa göre geç kalmaması için)
 			const extraLeadMs = (i === 0) ? 800 : 500;
 			const timeoutMs = Math.max(0, handStart - extraLeadMs);
 			const t = setTimeout(() => {
@@ -275,12 +275,12 @@ export default function GamePlayScreen({ route, navigation }) {
 		});
 	}, [participants.length, layout.width, layout.height, clearOpenTimers, getIsDistributionDone]);
 
-			// Helper: consider distribution/result done only when backend finalized
+			// Yardımcı: dağıtımı/sonucu yalnızca arka uç kesinleştirdiğinde bitmiş say
 			const isDistributionDone = useCallback(() => {
 				return !!(result?.isCompleted || (result?.shortStickUserId != null && result?.shortStickUserId !== undefined));
 			}, [result?.isCompleted, result?.shortStickUserId]);
 
-			// Hand sequence: modular per-player animation
+			// El dizisi: oyuncu başına modüler animasyon
 			const startHandSequence = useCallback((index, opts = {}) => {
 				const optCx = (opts && opts.cx != null) ? opts.cx : (layout.width ? layout.width / 2 : 0);
 				const optCy = (opts && opts.cy != null) ? opts.cy : (layout.height ? layout.height / 2 - 40 : 0);
@@ -290,27 +290,27 @@ export default function GamePlayScreen({ route, navigation }) {
 				const stick = sticksRef.current[index];
 				if (!hand || !handOp || !stick) return;
 
-				// compute avatar pos and short stick absolute coords
+				// avatar konumu ve kısa çubuğun mutlak koordinatlarını hesapla
 				const pos = positions[index] || { x: optCx, y: optCy };
 				const avatarX = pos.x;
 				const avatarY = pos.y;
 
-				// stick's short (current) absolute: use translate of stick + center
-				// animated values are relative to center cluster; we can compute end based on positions
+				// çubuğun kısa (mevcut) mutlak konumu: çubuğun çevirisini + merkezi kullan
+				// animasyon değerleri merkez kümesine göre görecelidir; sonu pozisyonlara göre hesaplayabiliriz
 				const stickTargetAbsX = pos.x - optPull * ( (pos.x - optCx) / (Math.hypot(pos.x - optCx, pos.y - optCy) || 1) );
 				const stickTargetAbsY = pos.y - optPull * ( (pos.y - optCy) / (Math.hypot(pos.x - optCx, pos.y - optCy) || 1) );
 
-				// start hand near avatar and move to stick, then pull stick to avatar
-				const handStartX = avatarX - optCx; // relative to center
+				// eli avatar yakınında başlat, çubuğa götür, sonra çubuğu avatara çek
+				const handStartX = avatarX - optCx; // merkeze göre
 				const handStartY = avatarY - optCy;
 				const handGrabX = stickTargetAbsX - optCx;
 				const handGrabY = stickTargetAbsY - optCy;
 
-				// Reset positions
+				// Pozisyonları sıfırla
 				hand.setValue({ x: handStartX, y: handStartY });
 				handOp.setValue(0);
 
-				// move hand to stick
+				// eli çubuğa götür
 				const grabDur = 420;
 				const pullDur = 380;
 
@@ -319,7 +319,7 @@ export default function GamePlayScreen({ route, navigation }) {
 						Animated.timing(handOp, { toValue: 1, duration: 150, useNativeDriver: true }),
 						Animated.timing(hand, { toValue: { x: handGrabX, y: handGrabY }, duration: grabDur, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
 					]),
-					// when hand reaches stick, pull both hand and stick to avatar
+					// el çubuğa ulaştığında, hem eli hem çubuğu avatara çek
 					Animated.parallel([
 						Animated.timing(hand, { toValue: { x: handStartX, y: handStartY }, duration: pullDur, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
 						Animated.timing(stick, { toValue: { x: handStartX - 8, y: handStartY - 20 }, duration: pullDur, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
@@ -327,20 +327,20 @@ export default function GamePlayScreen({ route, navigation }) {
 					]),
 					Animated.timing(handOp, { toValue: 0, duration: 120, useNativeDriver: true }),
 				]).start(() => {
-					// completed for this player
+					// Bu oyuncu için tamamlandı
 				});
 			}, [positions, layout.width, layout.height]);
 
-	// Auto-close modal and go to Result screen
+	// Modali otomatik kapat ve Sonuç ekranına geç
 	const closeAndNavigate = useCallback(() => {
 		setShowModal(false);
-		// small delay to allow modal disappear
+		// modalin kaybolması için küçük bir gecikme
 		setTimeout(() => navigation.replace('Result', { gameId }), 200);
 	}, [navigation, gameId]);
 
-	// Not auto-navigating; user taps the button to proceed
+	// Otomatik gezinme yok; kullanıcı devam etmek için düğmeye dokunur
 
-			// Also reactively open if data updates indicate completion after animation end
+			// Veri güncellemeleri animasyon bitiminden sonra tamamlandığını gösterirse tepki olarak aç
 			useEffect(() => {
 				if (showModal) return;
 				if (!animationStartedRef.current) return;
@@ -349,7 +349,7 @@ export default function GamePlayScreen({ route, navigation }) {
 				if (isDistributionDone()) setShowModal(true);
 			}, [showModal, isDistributionDone, result]);
 
-	// On unmount, ensure timers are cleared
+	// Bileşen kalkarken zamanlayıcıların temizlendiğinden emin ol
 	useEffect(() => () => {
 		clearOpenTimers();
 		handTimersRef.current.forEach(t => clearTimeout(t));
@@ -358,19 +358,19 @@ export default function GamePlayScreen({ route, navigation }) {
 
 	const myOutcome = useMemo(() => {
 		if (!result || !me) return null;
-		// Prefer my row in results if available (most reliable)
+		// Varsa sonuçlardaki kendi satırımı tercih et (en güvenilir)
 		const row = result.results?.find(r => String(r.userId) === String(me));
 		if (row) return { isShort: !!row.isShortStick };
-		// Else, use shortStickUserId only if backend provided it
+		// Aksi halde, kısa çöp kullanıcı idsini yalnızca arka uç sağladıysa kullan
 		if (result.shortStickUserId != null && result.shortStickUserId !== undefined) {
 			return { isShort: String(result.shortStickUserId) === String(me) };
 		}
-		// Unknown yet -> keep waiting state
+		// Hâlâ bilinmiyor -> bekleme durumunda kal
 		return null;
 	}, [result, me]);
 
 	const centerSticks = useMemo(() => {
-		// For initial visual bundle: narrow vertical stack
+		// İlk görsel küme için: dar bir dikey yığın
 		const count = participants.length || 0;
 		const arr = Array.from({ length: count }, (_, i) => i);
 		return arr;
@@ -398,19 +398,19 @@ export default function GamePlayScreen({ route, navigation }) {
 
 	return (
 		<View style={styles.container} onLayout={(e) => setLayout(e.nativeEvent.layout)}>
-			{/* Penalty / Title */}
+			{/* Ceza / Başlık */}
 			<View style={styles.headerBox}>
 				<Text style={styles.penaltyLabel}>Ceza</Text>
 				<Text style={styles.penaltyText}>{detail.penaltyText}</Text>
 			</View>
 
-			{/* Stage area */}
+			{/* Sahne alanı */}
 			<View style={styles.stage}>
-				{/* Players around a circle */}
+				{/* Oyuncular daire etrafında */}
 				{participants.map((p, i) => {
 					const pos = positions[i] || { x: cx, y: cy };
 					const avatarSize = 56;
-					const playerWidth = 88; // match styles.player width so centering is accurate
+					const playerWidth = 88; // styles.player genişliğini eşle; ortalama doğru olsun
 		 	  const nameColor = getUserNameColor(p.userId || p.username);
 					return (
 						<View key={p.userId} style={[styles.player, { left: pos.x - playerWidth / 2, top: pos.y - avatarSize / 2 }]}> 
@@ -420,9 +420,9 @@ export default function GamePlayScreen({ route, navigation }) {
 					);
 				})}
 
-				{/* Central bundle of sticks and their animations to each player */}
+				{/* Çubukların merkezde kümelenmesi ve her oyuncuya animasyonları */}
 				<View style={[styles.centerCluster, { left: cx - 20, top: cy - 40 }]}>
-					{/* origin log image (where sticks come from) */}
+					{/* kütük görseli (çubukların çıktığı yer) */}
 					<Image source={require('../assets/log.png')} style={styles.centerLog} resizeMode="contain" />
 					{centerSticks.map((_, i) => {
 						const translate = sticksRef.current[i] || (sticksRef.current[i] = new Animated.ValueXY({ x: 0, y: 0 }));
@@ -432,17 +432,17 @@ export default function GamePlayScreen({ route, navigation }) {
 								<Animated.View key={`stick-${i}`} style={[styles.stickWrap, { transform: [{ translateX: translate.x }, { translateY: translate.y }], opacity }]}> 
 									<Image source={getStickSource()} style={styles.stick} resizeMode="contain" />
 								</Animated.View>
-								{/* hand */}
+								{/* el */}
 								{(() => {
-									// ensure refs exist
+									// referansların mevcut olduğundan emin ol
 									handsRef.current[i] = handsRef.current[i] || new Animated.ValueXY({ x: 0, y: 0 });
 									handOpacityRef.current[i] = handOpacityRef.current[i] || new Animated.Value(0);
 									const hand = handsRef.current[i];
 									const hOp = handOpacityRef.current[i];
 									const handSource = getHandSource(participants[i]?.userId || participants[i]?.username);
-									// rotate hand so it points from the player's position toward the center
-									const posAngle = positions[i]?.angle ?? 0; // angle from center -> player
-									const rotateToCenter = `${posAngle + Math.PI / 2}rad`; // adjust so default-down asset points inward
+									// eli oyuncunun konumundan merkeze doğru işaret edecek şekilde döndür
+									const posAngle = positions[i]?.angle ?? 0; // merkezden -> oyuncuya açı
+									const rotateToCenter = `${posAngle + Math.PI / 2}rad`; // varsayılan-aşağı varlığı içe baksın
 									return (
 										<Animated.View key={`hand-${i}`} style={[styles.handWrap, { transform: [{ translateX: hand.x }, { translateY: hand.y }, { rotate: rotateToCenter }], opacity: hOp }]}> 
 											<Image source={handSource} style={styles.hand} resizeMode="contain" />
@@ -455,12 +455,12 @@ export default function GamePlayScreen({ route, navigation }) {
 				</View>
 			</View>
 
-			{/* Result hint */}
+			{/* Sonuç ipucu */}
 			<View style={styles.footer}>
 				<Text style={styles.footerText}>Çubuklar dagıtılıyor…</Text>
 			</View>
 
-			{/* Personal modal */}
+			{/* Kişisel modal */}
 			<Modal visible={showModal} transparent animationType="fade" onRequestClose={() => closeAndNavigate()}>
 				<View style={styles.modalBackdrop}>
 					<View style={styles.modalCard}>

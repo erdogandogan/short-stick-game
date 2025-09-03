@@ -2,9 +2,9 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { API_BASE_URL } from '../api';
 
-// Derive WS base from API base
+// WS taban adresini API tabanından türet
 function toWsUrl(apiBase) {
-	// apiBase like http://host:5189/api
+	// apiBase örn: http://host:5189/api
 	let base = apiBase.replace(/\/$/, '');
 	base = base.replace(/\/api$/i, '');
 	if (base.startsWith('https://')) return 'wss://' + base.slice('https://'.length) + '/ws';
@@ -35,7 +35,7 @@ export function connect() {
 		} catch {}
 	};
 	socket.onclose = () => {
-		// auto-reconnect after small delay
+		// kısa bir gecikmeden sonra otomatik yeniden bağlan
 		setTimeout(() => {
 			try { connect(); } catch {}
 		}, 1000);

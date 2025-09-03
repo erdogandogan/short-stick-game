@@ -1,29 +1,29 @@
 import React, { createContext, useContext, useMemo } from 'react';
 
-// Home screen inspired palette
+// Ana sayfadan ilham alınan palet
 const defaultTheme = {
 	colors: {
-		background: '#ecfdf5', // soft green background
+		background: '#ecfdf5', // yumuşak yeşil arka plan
 		surface: '#ffffff',
 		border: '#d1fae5',
 		cardBorder: '#e5e7eb',
 
 		textPrimary: '#111827',
 		textMuted: '#6b7280',
-		brandDeep: '#065f46', // deep green text used on Home
-		brandSoft: '#047857', // greet green
+		brandDeep: '#065f46', // Ana sayfada kullanılan koyu yeşil yazı rengi
+		brandSoft: '#047857', // selamlama yeşili
 
 		primary: '#8B5CF6',
 		success: '#10b981',
 		danger: '#ef4444',
 		secondary: '#6b7280',
 
-		info: '#1e3a8a', // blue-900
+		info: '#1e3a8a', // mavi-900
 		warn: '#f59e0b',
 		neutral: '#9ca3af',
     	
-        dateText: '#6b7280', // matches textMuted for subtle date labels
-	    participantsText: '#065f46', // matches brandDeep to highlight participants
+        dateText: '#6b7280', // ince tarih etiketleri için textMuted ile uyumlu
+	    participantsText: '#065f46', // katılımcıları vurgulamak için brandDeep ile uyumlu
 	},
 };
 

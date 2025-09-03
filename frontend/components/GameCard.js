@@ -16,9 +16,9 @@ function formatDate(iso) {
 
 function StatusBadge({ isStarted, isCompleted }) {
   const { label, color, bg } = useMemo(() => {
-  if (isCompleted) return { label: 'Tamamlandı', color: '#374151', bg: '#e5e7eb' }; // gray badge
-  if (isStarted) return { label: 'Basladı', color: '#065f46', bg: '#a7f3d0' }; // emerald badge
-  return { label: 'Baslamadı', color: '#374151', bg: '#f3f4f6' }; // neutral badge
+  if (isCompleted) return { label: 'Tamamlandı', color: '#374151', bg: '#e5e7eb' }; // gri rozet
+  if (isStarted) return { label: 'Basladı', color: '#065f46', bg: '#a7f3d0' }; // zümrüt rozet
+  return { label: 'Baslamadı', color: '#374151', bg: '#f3f4f6' }; // nötr rozet
   }, [isStarted, isCompleted]);
   return (
     <View style={[styles.badge, { backgroundColor: bg }]}> 
@@ -29,14 +29,14 @@ function StatusBadge({ isStarted, isCompleted }) {
 
 function GameCard({ item, onPress, showJoin, joining, onJoin, onDelete }) {
   const theme = useTheme();
-  // Fallback in case Swipeable is unavailable on some platforms / builds
+  // Bazı platformlar/sürümlerde Swipeable kullanılamazsa yedek bileşen
   const SwipeableSafe = Swipeable || (({ children }) => <View>{children}</View>);
   const statusStyles = useMemo(() => {
-    // Completed -> gray tint, Started -> green tint, Not started -> white
+    // Tamamlandı -> gri ton, Başladı -> yeşil ton, Başlamadı -> beyaz
     if (item?.isCompleted) {
       return {
-        bg: '#f3f4f6', // gray-100
-        pressedBg: '#e5e7eb', // gray-200
+        bg: '#f3f4f6', // gri-100
+        pressedBg: '#e5e7eb', // gri-200
         border: '#e5e7eb',
         textPrimary: '#111827',
         meta: '#6b7280'
@@ -44,10 +44,10 @@ function GameCard({ item, onPress, showJoin, joining, onJoin, onDelete }) {
     }
     if (item?.isStarted) {
       return {
-        bg: '#d1fae5', // emerald-100 matches Home background
-        pressedBg: '#a7f3d0', // emerald-200
+        bg: '#d1fae5', // zümrüt-100 (Ana sayfa arka planıyla uyumlu)
+        pressedBg: '#a7f3d0', // zümrüt-200
         border: '#a7f3d0',
-        textPrimary: '#064e3b', // dark emerald for better contrast
+        textPrimary: '#064e3b', // daha iyi kontrast için koyu zümrüt
         meta: '#065f46'
       };
     }
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    // margins moved to container to keep background flush
+  // arka planın hizalı kalması için kenar boşlukları kapsayıcıya taşındı
     shadowColor: '#000',
     shadowOpacity: 0.08,
     shadowRadius: 6,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   ,global: { marginTop: 10, fontSize: 12, color: '#1e3a8a' }
   ,footerRow: { marginTop: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }
   ,actionsRow: { marginTop: 12, flexDirection: 'row', justifyContent: 'flex-end' }
-  ,joinBtn: { backgroundColor: '#10b981', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10 } // legacy (unused)
+  ,joinBtn: { backgroundColor: '#10b981', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10 } // eski (kullanılmıyor)
   ,joinText: { color: '#fff', fontFamily: 'LilitaOne_400Regular' }
   ,join3DWrap: { position: 'relative', height: 40, minWidth: 96 }
   ,joinDepth: {

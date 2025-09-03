@@ -38,7 +38,7 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<ActionResult<AuthResponseDto>> Register([FromBody] UserRegisterDto dto)
     {
-        // Normalize inputs: trim and lower-case email for comparisons/storage
+        // Girdileri normalize et: trim uygula ve karşılaştırma/saklama için e-postayı küçük harfe çevir
         var username = dto.Username.Trim();
         var email = dto.Email.Trim().ToLowerInvariant();
 

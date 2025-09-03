@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 
-// NOTE: Placeholder migration to align code-first model with new fields IsReady and AvatarUrl.
+// NOT: Code-first modelini IsReady ve AvatarUrl alanlarıyla hizalamak için yer tutucu migration.
 namespace ShortStickGame.Api.Migrations
 {
     public partial class AddReadyAndAvatar : Migration

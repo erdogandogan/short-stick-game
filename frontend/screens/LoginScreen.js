@@ -14,7 +14,7 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Android back button: always go to Start ("Test") when on Login
+  // Android geri tuşu: Giriş ekranındayken her zaman Başlangıç ("Test") ekranına git
   useFocusEffect(
     useCallback(() => {
       const onBack = () => { navigation.navigate('Test'); return true; };
@@ -23,7 +23,7 @@ export default function LoginScreen({ navigation }) {
     }, [navigation])
   );
 
-  // Intercept navigation back (gestures or programmatic) and route to Start
+  // Geri navigasyonunu (jestler veya programatik) yakala ve Başlangıç ekranına yönlendir
   useEffect(() => {
     const sub = navigation.addListener('beforeRemove', (e) => {
       if (e.data.action.type === 'GO_BACK' || e.data.action.type === 'POP') {
@@ -44,7 +44,7 @@ export default function LoginScreen({ navigation }) {
     try {
       setSubmitting(true);
       await login({ emailOrUsername, password });
-      // navigation will switch based on auth context
+  // navigasyon, kimlik doğrulama bağlamına göre değişecek
     } catch (e) {
       const msg = e?.response?.data?.message || 'Giris basarısız';
       toast.error(msg);

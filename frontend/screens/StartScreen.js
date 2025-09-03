@@ -4,7 +4,7 @@ import { Video } from 'expo-av';
 import { useTheme } from '../context/ThemeContext';
 import ThreeDButton from '../components/ThreeDButton';
 
-// Use expo-av's Video component (stable and installed in this project)
+// Bu projede kurulu ve stabil olan expo-av'in Video bileşenini kullan
 const VideoComponent = Video;
 
 export default function StartScreen({ navigation }) {
@@ -15,10 +15,10 @@ export default function StartScreen({ navigation }) {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
-      {/* Title */}
+  {/* Başlık */}
       <Text style={[styles.title, { color: theme.colors.text }]}>Short Stick Game</Text>
 
-      {/* Video / animation at the top */}
+  {/* Üstte video / animasyon */}
       <View style={styles.animationWrapper} pointerEvents="none">
         {VideoComponent ? (
           <VideoComponent
@@ -28,7 +28,7 @@ export default function StartScreen({ navigation }) {
               styles.video,
               {
                 aspectRatio,
-                maxHeight: screenHeight * 0.45, // keep video to at most 45% of screen height
+                maxHeight: screenHeight * 0.45, // videonun yüksekliğini ekranın en fazla %45'iyle sınırla
                 backgroundColor: theme.colors.background,
               },
             ]}
@@ -38,20 +38,20 @@ export default function StartScreen({ navigation }) {
             useNativeControls={false}
             onLoad={(meta) => {
               try {
-                // expo-av onLoad returns naturalSize in meta; expo-video may differ but often exposes size
+                // expo-av onLoad meta'da naturalSize döner; expo-video farklı olabilir ama genelde boyutu verir
                 const naturalSize = meta?.naturalSize ?? meta?.naturalSize?.presentationSize ?? meta?.source?.naturalSize;
                 if (naturalSize && naturalSize.width && naturalSize.height) {
                   setAspectRatio(naturalSize.width / naturalSize.height);
                 }
               } catch (e) {
-                // keep default aspect ratio if detection fails
+                // tespit başarısız olursa varsayılan en-boy oranını koru
               }
             }}
           />
         ) : null}
       </View>
 
-      {/* Buttons beneath the animation */}
+  {/* Animasyonun altında butonlar */}
       <View style={styles.navigationButtons}>
         <ThreeDButton
           text="Giris Yap"

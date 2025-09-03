@@ -7,10 +7,10 @@ public class User
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
 
-    // Optional avatar URL for profile picture
+    // Profil resmi için isteğe bağlı avatar URL'si
     public string? AvatarUrl { get; set; }
 
-    // Refresh token management
+    // Yenileme (refresh) token yönetimi
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiresAt { get; set; }
 }

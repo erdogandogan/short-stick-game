@@ -8,10 +8,11 @@ import { getToken, getRefreshToken, saveToken, saveRefreshToken } from './utils/
 // - USB ile bağlı Android/iOS fiziksel cihaz: localhost'a bağlanmak için adb reverse tercih edilir
 // - EXPO_PUBLIC_API_BASE_URL ile geçersiz kılabilirsiniz (örn. http://192.168.1.10:5189)
 export const API_BASE_URL = (() => {
-  // Çalışma zamanındaki ortam değişkenini tercih et; yoksa app.json/app.config içindeki Expo extra'ya düş
-  const fromEnv = (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_API_BASE_URL)
-    || (Constants?.expoConfig?.extra?.EXPO_PUBLIC_API_BASE_URL)
-    || (Constants?.expoConfig?.extra?.apiBaseUrl);
+  // Not: EXPO_PUBLIC_* değişkenleri build-time'da bundle'a inline edilir. Bu yüzden typeof process kontrolü YAPMAYIN.
+  // Önce EXPO_PUBLIC_API_BASE_URL'i oku; yoksa (yalnızca dev) Expo extra'dan dene.
+  const fromEnv = (process.env.EXPO_PUBLIC_API_BASE_URL)
+    ?? (Constants?.expoConfig?.extra?.EXPO_PUBLIC_API_BASE_URL)
+    ?? (Constants?.expoConfig?.extra?.apiBaseUrl);
   const forceAndroidLocalhost = (
     (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_ANDROID_USE_LOCALHOST === '1')
     || (Constants?.expoConfig?.extra?.EXPO_PUBLIC_ANDROID_USE_LOCALHOST === '1')
@@ -20,8 +21,7 @@ export const API_BASE_URL = (() => {
   const platform = Platform.OS;
   const expoHost = Constants?.expoConfig?.host || Constants?.expoConfig?.hostUri || Constants?.manifest2?.hostUri;
   const debugInfo = {
-    hasProcess: typeof process !== 'undefined',
-    envVar: fromEnv,
+    envVarPresent: !!fromEnv,
     platform,
     expoHost
   };

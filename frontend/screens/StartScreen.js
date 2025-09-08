@@ -20,35 +20,35 @@ export default function StartScreen({ navigation }) {
 
   {/* Üstte video / animasyon */}
       <View style={styles.animationWrapper} pointerEvents="none">
-        {VideoComponent ? (
-          <VideoComponent
-            ref={videoRef}
-            source={require('../assets/stick_war_animation.mp4')}
-            style={[
-              styles.video,
-              {
-                aspectRatio,
-                maxHeight: screenHeight * 0.45, // videonun yüksekliğini ekranın en fazla %45'iyle sınırla
-                backgroundColor: theme.colors.background,
-              },
-            ]}
-            resizeMode="contain"
-            shouldPlay
-            isLooping
-            useNativeControls={false}
-            onLoad={(meta) => {
-              try {
-                // expo-av onLoad meta'da naturalSize döner; expo-video farklı olabilir ama genelde boyutu verir
-                const naturalSize = meta?.naturalSize ?? meta?.naturalSize?.presentationSize ?? meta?.source?.naturalSize;
-                if (naturalSize && naturalSize.width && naturalSize.height) {
-                  setAspectRatio(naturalSize.width / naturalSize.height);
+        <View style={[styles.videoFrame, { backgroundColor: theme.colors.background }]}>
+          {VideoComponent ? (
+            <VideoComponent
+              ref={videoRef}
+              source={require('../assets/stick_war_animation.mp4')}
+              style={[
+                styles.video,
+                {
+                  aspectRatio,
+                  maxHeight: screenHeight * 0.45, // videonun yüksekliğini ekranın en fazla %45'iyle sınırla
+                },
+              ]}
+              resizeMode="contain"
+              shouldPlay
+              isLooping
+              useNativeControls={false}
+              onLoad={(meta) => {
+                try {
+                  const naturalSize = meta?.naturalSize ?? meta?.naturalSize?.presentationSize ?? meta?.source?.naturalSize;
+                  if (naturalSize && naturalSize.width && naturalSize.height) {
+                    setAspectRatio(naturalSize.width / naturalSize.height);
+                  }
+                } catch (e) {
+                  // tespit başarısız olursa varsayılan oranı koru
                 }
-              } catch (e) {
-                // tespit başarısız olursa varsayılan en-boy oranını koru
-              }
-            }}
-          />
-        ) : null}
+              }}
+            />
+          ) : null}
+        </View>
       </View>
 
   {/* Animasyonun altında butonlar */}
@@ -78,5 +78,10 @@ const styles = StyleSheet.create({
   title: { fontSize: 50, fontWeight: '700', marginBottom: 24, textAlign: 'center' },
   navigationButtons: { marginTop: 20 },
   animationWrapper: { alignItems: 'center', marginBottom: 24 },
+  videoFrame: {
+    width: '100%',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
   video: { width: '100%', backgroundColor: 'transparent' },
 });

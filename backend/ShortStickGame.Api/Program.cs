@@ -169,4 +169,6 @@ app.MapGet("/api/hello", () => Results.Ok("Hello World"));
 // Sağlık durumu/basit kök bilgi
 app.MapGet("/", () => new { name = "Short Stick Game API", version = "0.1.0" });
 
+app.Urls.Add("http://0.0.0.0:5000");
+
 app.Run();

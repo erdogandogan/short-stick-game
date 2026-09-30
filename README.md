@@ -62,3 +62,9 @@ npm start  # Expo dev server
 - `Jwt:Secret` repoda boştur; en az 32 karakterlik rastgele bir değeri ortam değişkeni (`Jwt__Secret`) veya `dotnet user-secrets` ile verin. Aksi halde API başlamaz.
 - Veritabanı parolasını (`ConnectionStrings__DefaultConnection`) de repoya yazmayın; `appsettings.Development.json` içindeki `YOUR_DB_PASSWORD` yer tutucusunu kendi ortamınızda değiştirin veya ortam değişkeniyle geçersiz kılın.
 - Geliştirme dışında HTTPS ve güvenlik ayarlarını gözden geçirin.
+
+---
+
+## Lisans
+
+Kod MIT lisansı altındadır (bkz. `LICENSE`). `frontend/assets/` altındaki görseller ve video yapay zeka ile üretilmiştir.

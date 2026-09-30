@@ -204,7 +204,7 @@ sudo ufw status
 
 ## 9) Frontend (Expo/React Native) configuration
 
-- The repo sets `EXPO_PUBLIC_API_BASE_URL` in `frontend/app.json` to `http://YOUR_SERVER_IP:5000`. This is used at build-time by Expo.
+- Set `EXPO_PUBLIC_API_BASE_URL` (e.g. `http://YOUR_SERVER_IP:5000`) as an environment variable or EAS env/secret. It is inlined at build-time by Expo.
 - `frontend/api.js` automatically appends `/api` and normalizes HTTP for native devices.
 - Android emulator/USB localhost rules (10.0.2.2 / adb reverse) are no longer needed because we now point to the Droplet IP.
 
@@ -218,7 +218,7 @@ cd frontend
 npx expo start --tunnel
 ```
 
-When building with EAS, the value from `app.json` will be embedded by default. You can also use EAS secrets to set EXPO_PUBLIC_API_BASE_URL.
+When building with EAS, provide EXPO_PUBLIC_API_BASE_URL via EAS environment variables/secrets.
 
 ## 10) CORS and WebSockets
 
@@ -275,6 +275,6 @@ server {
 ## 13) Summary of key values
 
 - Backend URL: http://YOUR_SERVER_IP:5000
-- Connection string: Server=localhost,1433;Database=ShortStickGame;User Id=sa;Password=ShortStickGame\_;TrustServerCertificate=True;
+- Connection string: Server=localhost,1433;Database=ShortStickGame;User Id=sa;Password=YOUR_DB_PASSWORD;TrustServerCertificate=True;
 - Expo base URL: EXPO_PUBLIC_API_BASE_URL=http://YOUR_SERVER_IP:5000
 - WebSocket: ws://YOUR_SERVER_IP:5000/ws

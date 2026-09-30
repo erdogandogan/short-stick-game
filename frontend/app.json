@@ -11,7 +11,6 @@
       "**/*"
     ],
     "extra": {
-      "EXPO_PUBLIC_API_BASE_URL": "http://YOUR_SERVER_IP",
       "EXPO_PUBLIC_ANDROID_USE_LOCALHOST": "0",
       "eas": {
         "projectId": "10896aec-765e-4ca3-988b-b553a2412a7a"

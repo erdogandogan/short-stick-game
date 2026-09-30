@@ -1,4 +1,6 @@
 # Backend
+publish/
+dotnet-install.ps1
 bin/
 obj/
 *.user
@@ -14,6 +16,7 @@ frontend/dist/
 frontend/web-build/
 
 # General
+.expo/
 *.env
 *.env.*
 .DS_Store

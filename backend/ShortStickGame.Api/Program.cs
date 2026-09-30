@@ -11,6 +11,14 @@ using ShortStickGame.Api.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 
+// JWT gizli anahtarı yapılandırmadan (ör. ortam değişkeni Jwt__Secret) gelmeli; zayıf/boş değerle başlamayı reddet
+var jwtSecret = builder.Configuration["Jwt:Secret"];
+if (string.IsNullOrWhiteSpace(jwtSecret) || jwtSecret.Length < 32 || jwtSecret.StartsWith("CHANGE_ME", StringComparison.OrdinalIgnoreCase))
+{
+    throw new InvalidOperationException(
+        "Jwt:Secret ayarlanmamış veya çok zayıf. En az 32 karakterlik rastgele bir değer verin (ör. ortam değişkeni Jwt__Secret veya 'dotnet user-secrets').");
+}
+
 // Servisleri ekle
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

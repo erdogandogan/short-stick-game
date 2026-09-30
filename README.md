@@ -16,6 +16,8 @@ React Native (Expo) frontend + ASP.NET Core (.NET 8) Web API backend.
 
 ```powershell
 cd backend/ShortStickGame.Api
+$env:Jwt__Secret = "en-az-32-karakterlik-rastgele-bir-deger-yazin"  # zorunlu
+# Veritabanı parolası: appsettings.Development.json içindeki YOUR_DB_PASSWORD yerine kendi SA parolanız
 dotnet restore
 dotnet ef database update  # İlk kezse EF CLI: dotnet tool install --global dotnet-ef
 dotnet run                 # HTTP: http://localhost:5189
@@ -57,5 +59,6 @@ npm start  # Expo dev server
 
 ## Notlar
 
-- `appsettings.json` içinde `Jwt:Secret` için güçlü bir değer kullanın.
+- `Jwt:Secret` repoda boştur; en az 32 karakterlik rastgele bir değeri ortam değişkeni (`Jwt__Secret`) veya `dotnet user-secrets` ile verin. Aksi halde API başlamaz.
+- Veritabanı parolasını (`ConnectionStrings__DefaultConnection`) de repoya yazmayın; `appsettings.Development.json` içindeki `YOUR_DB_PASSWORD` yer tutucusunu kendi ortamınızda değiştirin veya ortam değişkeniyle geçersiz kılın.
 - Geliştirme dışında HTTPS ve güvenlik ayarlarını gözden geçirin.
